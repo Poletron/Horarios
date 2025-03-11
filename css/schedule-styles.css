@@ -1,0 +1,134 @@
+.schedule-results {
+  margin-top: 20px;
+}
+
+.day-title {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 8px 15px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.course-item {
+  background-color: #f8f9fa;
+  transition: all 0.2s ease;
+}
+
+.course-item:hover {
+  background-color: #e9ecef;
+}
+
+/* Estilos para la vista de grilla */
+.schedule-grid-view {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.schedule-grid-view table {
+  min-width: 900px;
+}
+
+.time-header {
+  width: 80px;
+  vertical-align: middle;
+  text-align: center;
+}
+
+.time-cell {
+  width: 80px;
+  text-align: center;
+  vertical-align: middle;
+  background-color: #f8f9fa;
+}
+
+.empty-cell {
+  background-color: white;
+}
+
+.course-cell {
+  /* Quitamos el fondo fijo para que los colores de las materias funcionen */
+  /* background-color: #e3f2fd; <- eliminamos esta línea */
+  vertical-align: top;
+  padding: 5px !important;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.course-cell:hover {
+  box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  transform: scale(1.02);
+}
+
+.conflict-cell {
+  background-color: #f8d7da !important;
+  vertical-align: top;
+  padding: 5px !important;
+}
+
+.course-title {
+  font-size: 0.9rem;
+  display: block;
+}
+
+.course-details {
+  font-size: 0.75rem;
+}
+
+.course-room {
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+/* Estilos para el resumen */
+.schedule-summary-item {
+  padding: 8px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.schedule-summary-item:last-child {
+  border-bottom: none;
+}
+
+/* Mejora del efecto hover para los elementos de curso */
+.subject-item {
+  border-left: 4px solid transparent;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.subject-item:hover {
+  background-color: #f1f8ff;
+  border-left-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.subject-item.selected {
+  background-color: #e3f2fd;
+  border-left-color: var(--primary-color);
+}
+
+/* Colores predefinidos para las materias */
+.course-color-0 { background-color: #bbdefb !important; border-left: 4px solid #2196f3 !important; }
+.course-color-1 { background-color: #c8e6c9 !important; border-left: 4px solid #4caf50 !important; }
+.course-color-2 { background-color: #f8bbd0 !important; border-left: 4px solid #e91e63 !important; }
+.course-color-3 { background-color: #ffe0b2 !important; border-left: 4px solid #ff9800 !important; }
+.course-color-4 { background-color: #d1c4e9 !important; border-left: 4px solid #673ab7 !important; }
+.course-color-5 { background-color: #b2dfdb !important; border-left: 4px solid #009688 !important; }
+.course-color-6 { background-color: #ffccbc !important; border-left: 4px solid #ff5722 !important; }
+.course-color-7 { background-color: #f0f0f0 !important; border-left: 4px solid #9e9e9e !important; }
+.course-color-8 { background-color: #e1bee7 !important; border-left: 4px solid #9c27b0 !important; }
+.course-color-9 { background-color: #dcedc8 !important; border-left: 4px solid #8bc34a !important; }
+
+/* Añadimos también clases para la leyenda de colores */
+.color-sample {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  margin-right: 5px;
+  border-radius: 3px;
+  border-left-width: 4px;
+  border-left-style: solid;
+}
