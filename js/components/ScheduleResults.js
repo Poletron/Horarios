@@ -17,13 +17,13 @@ export default {
   },
   
   created() {
-    // Crear horarios de 7:00 AM a 9:00 PM
+    // Crear horarios de 7:00 AM a 9:00 PM solo con horas completas (sin medias horas)
     const startHour = 7;
-    const endHour = 21;
+    const endHour = 22; // Aumentamos una hora para incluir hasta las 21:00
     
     for (let hour = startHour; hour < endHour; hour++) {
       this.timeSlots.push(`${hour}:00`);
-      this.timeSlots.push(`${hour}:30`);
+      // Ya no incluimos las medias horas: this.timeSlots.push(`${hour}:30`);
     }
   },
   
@@ -145,11 +145,19 @@ export default {
       const endMinutes = toMinutes(endTime);
       
       // Encontrar qué slots de tiempo están cubiertos por esta clase
+      // Esta lógica ya existente funcionará con los nuevos slots de hora completa
       return this.timeSlots.filter(slot => {
         const [slotHour, slotMinute] = slot.split(':').map(Number);
         const slotMinutes = slotHour * 60 + slotMinute;
+        const nextSlotMinutes = slotMinutes + 60; // Consideramos que cada slot ahora es de 1 hora
         
-        return beginMinutes <= slotMinutes && slotMinutes < endMinutes;
+        // Una clase se muestra en un slot si:
+        // - Comienza durante este slot, O
+        // - Termina durante este slot, O
+        // - Abarca completamente el slot
+        return (beginMinutes >= slotMinutes && beginMinutes < nextSlotMinutes) || // Comienza en este slot
+               (endMinutes > slotMinutes && endMinutes <= nextSlotMinutes) ||     // Termina en este slot
+               (beginMinutes <= slotMinutes && endMinutes >= nextSlotMinutes);    // Abarca el slot completo
       });
     },
     

@@ -1,4 +1,3 @@
-
 /**
  * Servicio para generar horarios posibles a partir de materias seleccionadas
  */
@@ -30,7 +29,8 @@ export default {
         openSection: course.openSection,
         scheduleType: course.scheduleTypeDescription,
         meetingsFaculty: course.meetingsFaculty,
-        courseReferenceNumber: course.courseReferenceNumber // NRC
+        courseReferenceNumber: course.courseReferenceNumber, // NRC
+        campusDescription: course.campusDescription // Añadir propiedad campus a las secciones
       });
     });
     
@@ -41,25 +41,46 @@ export default {
    * Genera todos los horarios posibles a partir de las materias seleccionadas
    * @param {Array} selectedSubjects - Materias seleccionadas (agrupadas)
    * @param {Boolean} onlyOpenSections - Si solo se consideran secciones abiertas
+   * @param {String} selectedCampus - Campus para filtrar las secciones (opcional)
    * @return {Array} Combinaciones válidas de horarios
    */
-  generatePossibleSchedules(selectedSubjects, onlyOpenSections = true) {
+  generatePossibleSchedules(selectedSubjects, onlyOpenSections = true, selectedCampus = '') {
     // Filtrar secciones abiertas si es necesario
     const filteredSubjects = selectedSubjects.map(subject => {
-      const sections = onlyOpenSections 
+      // Filtrar primero por secciones abiertas si es necesario
+      let sections = onlyOpenSections 
         ? subject.sections.filter(section => section.openSection) 
-        : subject.sections;
+        : [...subject.sections];
+      
+      // Luego filtrar por campus si se ha seleccionado uno
+      if (selectedCampus) {
+        const sectionsInCampus = sections.filter(section => 
+          section.campusDescription === selectedCampus
+        );
+        
+        // Solo reemplazar las secciones si encontramos alguna en este campus
+        if (sectionsInCampus.length > 0) {
+          sections = sectionsInCampus;
+        } else {
+          // Si no hay secciones en este campus, mantenemos las secciones para mostrar advertencia después
+          console.log(`No se encontraron secciones en ${selectedCampus} para ${subject.subject}${subject.courseNumber}`);
+        }
+      }
+      
       return { ...subject, sections };
     });
     
-    // Comprobar si hay materias sin secciones disponibles
+    // Comprobar si hay materias sin secciones disponibles después del filtrado
     const invalidSubjects = filteredSubjects.filter(subject => subject.sections.length === 0);
     if (invalidSubjects.length > 0) {
       return {
         schedules: [],
-        errors: invalidSubjects.map(subject => 
-          `La materia ${subject.subject}${subject.courseNumber} (${subject.courseTitle}) no tiene secciones ${onlyOpenSections ? 'abiertas' : 'disponibles'}.`
-        )
+        errors: invalidSubjects.map(subject => {
+          const reason = selectedCampus 
+            ? `en el campus "${selectedCampus}"` 
+            : (onlyOpenSections ? 'abiertas' : 'disponibles');
+          return `La materia ${subject.subject}${subject.courseNumber} (${subject.courseTitle}) no tiene secciones ${reason}.`;
+        })
       };
     }
     
@@ -196,5 +217,168 @@ export default {
     
     // Verificar superposición
     return (start1Min < end2Min) && (start2Min < end1Min);
+  },
+  
+  /**
+   * Genera horarios posibles distinguiendo entre materias prioritarias y candidatas
+   * @param {Array} prioritySubjects - Materias que deben estar en todos los horarios
+   * @param {Array} candidateSubjects - Materias opcionales que pueden incluirse
+   * @param {Boolean} onlyOpenSections - Si solo se consideran secciones abiertas
+   * @param {String} selectedCampus - Campus para filtrar las secciones (opcional)
+   * @return {Object} Resultado con los horarios generados y posibles errores
+   */
+  generatePossibleSchedulesWithCandidates(prioritySubjects, candidateSubjects, onlyOpenSections = true, selectedCampus = '') {
+    // Si no hay materias prioritarias, mostrar mensaje de error
+    if (prioritySubjects.length === 0 && candidateSubjects.length === 0) {
+      return {
+        schedules: [],
+        errors: ['Debes seleccionar al menos una materia para generar horarios.']
+      };
+    }
+    
+    // Primer paso: Filtrar secciones según las opciones seleccionadas
+    const filteredPrioritySubjects = this.filterSubjects(prioritySubjects, onlyOpenSections, selectedCampus);
+    const filteredCandidateSubjects = this.filterSubjects(candidateSubjects, onlyOpenSections, selectedCampus);
+    
+    // Comprobar si hay materias prioritarias sin secciones disponibles
+    const invalidPrioritySubjects = filteredPrioritySubjects.filter(subject => subject.sections.length === 0);
+    if (invalidPrioritySubjects.length > 0) {
+      return {
+        schedules: [],
+        errors: invalidPrioritySubjects.map(subject => {
+          const reason = selectedCampus 
+            ? `en el campus "${selectedCampus}"` 
+            : (onlyOpenSections ? 'abiertas' : 'disponibles');
+          return `La materia prioritaria ${subject.subject}${subject.courseNumber} (${subject.courseTitle}) no tiene secciones ${reason}.`;
+        })
+      };
+    }
+    
+    // Segundo paso: Generar horarios con las materias prioritarias
+    const prioritySchedules = this.generateCombinations(filteredPrioritySubjects);
+    
+    // Filtrar horarios prioritarios sin conflictos
+    const validPrioritySchedules = prioritySchedules.filter(schedule => !this.hasScheduleConflict(schedule));
+    
+    if (validPrioritySchedules.length === 0) {
+      return {
+        schedules: [],
+        errors: ['No fue posible generar horarios sin conflictos con las materias prioritarias seleccionadas.']
+      };
+    }
+    
+    // Si no hay materias candidatas, devolver los horarios con solo las prioritarias
+    if (filteredCandidateSubjects.length === 0) {
+      return {
+        schedules: validPrioritySchedules,
+        totalCombinations: prioritySchedules.length,
+        validCombinations: validPrioritySchedules.length,
+        errors: []
+      };
+    }
+    
+    // Tercer paso: Para cada horario prioritario válido, intentar añadir materias candidatas
+    const finalSchedules = [];
+    
+    validPrioritySchedules.forEach(prioritySchedule => {
+      // Intentar añadir cada materia candidata de forma individual
+      const possibleAdditions = filteredCandidateSubjects.map(candidateSubject => {
+        // Para cada sección de la materia candidata
+        return candidateSubject.sections.map(section => {
+          // Crear un nuevo item para el horario
+          const candidateItem = {
+            subjectId: candidateSubject.id,
+            subject: candidateSubject.subject,
+            courseNumber: candidateSubject.courseNumber,
+            courseTitle: candidateSubject.courseTitle,
+            creditHourLow: candidateSubject.creditHourLow,
+            section: section
+          };
+          
+          // Verificar si hay conflicto al añadir esta sección al horario prioritario
+          const hasConflict = prioritySchedule.some(existingItem => 
+            this.sectionsConflict(existingItem.section, section)
+          );
+          
+          return {
+            item: candidateItem,
+            hasConflict: hasConflict
+          };
+        });
+      }).flat();
+      
+      // Filtrar las secciones candidatas que no tienen conflicto
+      const nonConflictingCandidates = possibleAdditions.filter(addition => !addition.hasConflict)
+        .map(addition => addition.item);
+      
+      // Generar todas las posibles combinaciones de materias candidatas sin conflicto
+      // Aquí necesitamos un algoritmo que genere todas las combinaciones posibles (0 o más elementos)
+      const candidateCombinations = this.generateSubsetCombinations(nonConflictingCandidates);
+      
+      // Para cada combinación, crear un horario completo (prioritarias + candidatas)
+      candidateCombinations.forEach(candidateCombo => {
+        finalSchedules.push([...prioritySchedule, ...candidateCombo]);
+      });
+    });
+    
+    return {
+      schedules: finalSchedules,
+      totalPrioritySchedules: validPrioritySchedules.length,
+      totalFinalSchedules: finalSchedules.length,
+      errors: []
+    };
+  },
+  
+  /**
+   * Filtra las secciones de las materias según las opciones seleccionadas
+   * @param {Array} subjects - Lista de materias a filtrar
+   * @param {Boolean} onlyOpenSections - Si solo se consideran secciones abiertas
+   * @param {String} selectedCampus - Campus para filtrar las secciones (opcional)
+   * @return {Array} Materias con secciones filtradas
+   */
+  filterSubjects(subjects, onlyOpenSections, selectedCampus) {
+    return subjects.map(subject => {
+      // Filtrar primero por secciones abiertas si es necesario
+      let sections = onlyOpenSections 
+        ? subject.sections.filter(section => section.openSection) 
+        : [...subject.sections];
+      
+      // Luego filtrar por campus si se ha seleccionado uno
+      if (selectedCampus) {
+        const sectionsInCampus = sections.filter(section => 
+          section.campusDescription === selectedCampus
+        );
+        
+        // Solo reemplazar las secciones si encontramos alguna en este campus
+        if (sectionsInCampus.length > 0) {
+          sections = sectionsInCampus;
+        }
+      }
+      
+      return { ...subject, sections };
+    });
+  },
+  
+  /**
+   * Genera todas las combinaciones posibles de subconjuntos (incluido el conjunto vacío)
+   * @param {Array} items - Lista de elementos
+   * @return {Array} Todas las posibles combinaciones (subconjuntos)
+   */
+  generateSubsetCombinations(items) {
+    // Empezamos con el conjunto vacío
+    const result = [[]];
+    
+    // Para cada elemento, generamos nuevas combinaciones añadiéndolo a las existentes
+    for (const item of items) {
+      const currentLength = result.length;
+      for (let i = 0; i < currentLength; i++) {
+        result.push([...result[i], item]);
+      }
+    }
+    
+    // Quitamos el conjunto vacío si no queremos incluirlo
+    // result.shift();
+    
+    return result;
   }
 };
