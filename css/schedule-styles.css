@@ -23,6 +23,8 @@
 .schedule-grid-view {
   max-width: 100%;
   overflow-x: auto;
+  background-color: white;
+  min-width: 800px;
 }
 
 .schedule-grid-view table {
@@ -78,7 +80,7 @@
 
 .course-room {
   font-size: 0.75rem;
-  color: #6c757d;
+  color: #6c757d; 
 }
 
 /* Estilos para el resumen */
@@ -131,4 +133,62 @@
   border-radius: 3px;
   border-left-width: 4px;
   border-left-style: solid;
+}
+
+/* Modal background overlay */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1040;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Modal styling */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1050;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  outline: 0;
+  display: none;
+}
+
+.modal.show {
+  display: block;
+}
+
+.modal-dialog {
+  position: relative;
+  width: auto;
+  margin: 1.75rem auto;
+  pointer-events: none;
+  max-width: 500px;
+}
+
+.modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  pointer-events: auto;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 0.3rem;
+  outline: 0;
+}
+
+.small {
+  font-size: 0.875em;
+}
+
+/* Add padding to download button text */
+.btn-lg .small {
+  margin-top: 4px;
 }

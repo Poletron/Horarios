@@ -12,7 +12,8 @@ export default {
       dayProperties: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
       timeSlots: [],
       displayFormat: 'list', // 'list' o 'grid'
-      subjectColors: {} // Mapa para almacenar colores por asignatura
+      subjectColors: {}, // Mapa para almacenar colores por asignatura
+      showSaveModal: false // Control para mostrar/ocultar el modal de descarga
     };
   },
   
@@ -94,6 +95,7 @@ export default {
                 matrix[day][slot].push({
                   id: course.subjectId,
                   title: `${course.subject}${course.courseNumber}`,
+                  courseTitle: decodeHtmlEntities(course.courseTitle),  // Aseguramos que el título esté decodificado
                   fullTitle: course.courseTitle,
                   nrc: course.section.courseReferenceNumber,
                   section: course.section.sequenceNumber,
@@ -273,9 +275,12 @@ export default {
       if (!courses || courses.length === 0) return '';
       
       return courses.map(course => {
+        // Obtener versión corta del título para mostrar (p.ej. "Cálculo Diferencial" en vez de "FING02003")
+        const shortTitle = this.getShortTitle(course.courseTitle);
+        
         return `
           <div>
-            <strong class="course-title">${course.title} - ${course.section}</strong>
+            <strong class="course-title">${shortTitle} - ${course.section}</strong>
             <div class="course-details">
               ${course.beginTime} - ${course.endTime}
             </div>
@@ -287,6 +292,163 @@ export default {
         `;
       }).join('');
     },
+
+    // Método para obtener versión corta del título de la materia
+    getShortTitle(fullTitle) {
+      if (!fullTitle) return '';
+      
+      // Quitamos puntos y caracteres especiales que puedan estar al final
+      const cleanTitle = fullTitle.replace(/\.$/, '');
+      
+      // Si el título es corto, lo devolvemos completo
+      if (cleanTitle.length < 30) return cleanTitle;
+      
+      // Si es largo, obtenemos las primeras palabras (hasta 25 caracteres)
+      return cleanTitle.substring(0, 25) + '...';
+    },
+
+    // Métodos de descarga
+    downloadAsImage() {
+      this.showSaveModal = false;
+      
+      // Asegurarnos de que estamos en vista de grilla
+      const originalFormat = this.displayFormat;
+      this.displayFormat = 'grid';
+      
+      // Esperar a que el DOM se actualice
+      this.$nextTick(() => {
+        const element = document.querySelector('.schedule-grid-view');
+        if (!element) {
+          alert('No se pudo generar la imagen. Intenta de nuevo.');
+          this.displayFormat = originalFormat;
+          return;
+        }
+        
+        html2canvas(element, {
+          scale: 2, // Mejor calidad
+          useCORS: true,
+          backgroundColor: '#ffffff'
+        }).then(canvas => {
+          const link = document.createElement('a');
+          link.download = `horario-${new Date().toLocaleDateString().replace(/\//g, '-')}.png`;
+          link.href = canvas.toDataURL('image/png');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          // Restaurar formato original
+          this.displayFormat = originalFormat;
+        });
+      });
+    },
+    
+    downloadAsList() {
+      this.showSaveModal = false;
+      
+      let content = '<!DOCTYPE html><html><head><meta charset="UTF-8">';
+      content += '<title>Horario UCAB</title>';
+      content += '<style>';
+      content += 'body { font-family: Arial, sans-serif; margin: 20px; }';
+      content += 'h1 { text-align: center; }';
+      content += '.day-section { margin-bottom: 20px; }';
+      content += '.course-item { border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px; }';
+      content += '.no-classes { color: #666; font-style: italic; }';
+      content += 'table { width: 100%; border-collapse: collapse; }';
+      content += 'th, td { border: 1px solid #ddd; padding: 8px; }';
+      content += 'th { background-color: #f2f2f2; }';
+      content += 'footer { margin-top: 20px; text-align: center; font-size: 12px; color: #666; }';
+      content += '</style></head><body>';
+      
+      content += `<h1>Horario UCAB - ${new Date().toLocaleDateString()}</h1>`;
+      
+      // Añadir tabla de resumen
+      content += '<h2>Resumen de Materias</h2>';
+      content += '<table><thead><tr><th>Materia</th><th>Sección</th><th>NRC</th><th>Créditos</th></tr></thead><tbody>';
+      
+      this.currentSchedule.forEach(course => {
+        content += `<tr>
+          <td>${course.subject}${course.courseNumber} - ${course.courseTitle}</td>
+          <td>${course.section.sequenceNumber}</td>
+          <td>${course.section.courseReferenceNumber}</td>
+          <td>${course.creditHourLow}</td>
+        </tr>`;
+      });
+      
+      content += '</tbody></table>';
+      
+      // Añadir detalle por días
+      content += '<h2>Horario por Días</h2>';
+      
+      this.daysOfWeek.forEach((day, index) => {
+        const courses = this.getCoursesForDay(this.dayProperties[index]);
+        
+        content += `<div class="day-section">`;
+        content += `<h3>${day}</h3>`;
+        
+        if (courses.length === 0) {
+          content += `<p class="no-classes">No hay clases programadas</p>`;
+        } else {
+          courses.forEach(course => {
+            content += `<div class="course-item">
+              <strong>${course.title} - ${course.section}</strong> (NRC: ${course.nrc})<br>
+              ${course.fullTitle}<br>
+              Hora: ${course.beginTime} - ${course.endTime}
+              ${course.room !== 'N/A' ? '<br>Aula: ' + course.room : ''}
+            </div>`;
+          });
+        }
+        
+        content += `</div>`;
+      });
+      
+      content += '<footer>Generado por Horario UCAB</footer>';
+      content += '</body></html>';
+      
+      // Crear y descargar el archivo
+      const blob = new Blob([content], { type: 'text/html' });
+      const link = document.createElement('a');
+      link.download = `horario-lista-${new Date().toLocaleDateString().replace(/\//g, '-')}.html`;
+      link.href = URL.createObjectURL(blob);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
+    
+    downloadNRCsOnly() {
+      this.showSaveModal = false;
+      
+      // Extraer todos los NRCs únicos
+      const nrcs = [...new Set(this.currentSchedule.map(course => 
+        course.section.courseReferenceNumber
+      ))];
+      
+      // Crear contenido con los NRCs, uno por línea
+      let content = 'NRCs para inscripción:\n\n';
+      nrcs.forEach(nrc => {
+        content += nrc + '\n';
+      });
+      
+      // También añadir una sección con NRCs en formato copiable (sin espacios)
+      content += '\n\nFormato para copiar y pegar:\n';
+      content += nrcs.join(', ');
+      
+      // Crear y descargar el archivo
+      const blob = new Blob([content], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.download = 'NRC-para-inscribir.txt';
+      link.href = URL.createObjectURL(blob);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    },
+    
+    openSaveModal() {
+      this.showSaveModal = true;
+    },
+    
+    closeSaveModal() {
+      this.showSaveModal = false;
+    }
   },
   
   template: `
@@ -378,7 +540,7 @@ export default {
                       :class="getCellClasses(scheduleMatrix[day][timeSlot])">
                     <div v-for="course in scheduleMatrix[day][timeSlot]" :key="course.id">
                       <div v-if="scheduleMatrix[day][timeSlot].length > 0">
-                        <strong class="course-title">{{ course.title }} - {{ course.section }}</strong>
+                        <strong class="course-title">{{ getShortTitle(course.courseTitle) }} - {{ course.section }}</strong>
                         <div class="badge bg-secondary mb-1">NRC: {{ course.nrc }}</div>
                         <div class="course-details">
                           {{ course.beginTime }} - {{ course.endTime }}
@@ -397,10 +559,10 @@ export default {
             <div class="mt-3 p-2 bg-light rounded">
               <h5>Materias:</h5>
               <div class="d-flex flex-wrap">
-                <div v-for="(colorIndex, subjectId) in subjectColors" :key="subjectId"
+                <div v-for="(course, index) in currentSchedule" :key="course.subjectId"
                     class="me-3 mb-2 d-flex align-items-center">
-                  <div :class="['color-sample', 'course-color-' + colorIndex]"></div>
-                  <span>{{ subjectId }}</span>
+                  <div :class="['color-sample', 'course-color-' + (subjectColors[course.subjectId] || 0)]"></div>
+                  <span>{{ getShortTitle(course.courseTitle) }}</span>
                 </div>
               </div>
             </div>
@@ -426,7 +588,7 @@ export default {
         </div>
         
         <div class="card-footer text-center">
-          <button class="btn btn-success" @click="$emit('save-schedule', currentSchedule)">
+          <button class="btn btn-success" @click="openSaveModal">
             Guardar este horario
           </button>
         </div>
@@ -440,6 +602,45 @@ export default {
       
       <div v-else-if="!generatedSchedules" class="text-center p-4">
         <p class="text-muted">Selecciona materias y genera horarios para ver resultados aquí.</p>
+      </div>
+      
+      <!-- Modal de opciones de descarga - Estructura corregida -->
+      <div v-if="showSaveModal">
+        <!-- Backdrop separado del diálogo del modal -->
+        <div class="modal-backdrop fade show"></div>
+        
+        <!-- Modal dialog -->
+        <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Guardar Horario</h5>
+                <button type="button" class="btn-close" @click="closeSaveModal"></button>
+              </div>
+              <div class="modal-body">
+                <div class="d-grid gap-2">
+                  <button @click="downloadAsImage" class="btn btn-primary btn-lg">
+                    <i class="bi bi-file-image"></i> Descargar como Imagen
+                    <div class="small text-light">Guarda la vista de grilla como una imagen PNG</div>
+                  </button>
+                  
+                  <button @click="downloadAsList" class="btn btn-info btn-lg">
+                    <i class="bi bi-file-text"></i> Descargar como Lista
+                    <div class="small text-light">Guarda el horario como un documento HTML detallado</div>
+                  </button>
+                  
+                  <button @click="downloadNRCsOnly" class="btn btn-success btn-lg">
+                    <i class="bi bi-clipboard"></i> Solo texto NRC para inscribir
+                    <div class="small text-light">Guarda solo los NRCs para copiar y pegar</div>
+                  </button>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @click="closeSaveModal">Cerrar</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   `

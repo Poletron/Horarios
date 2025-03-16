@@ -20,12 +20,8 @@ const app = createApp({
   methods: {
     handleSchedulesGenerated(schedules) {
       this.generatedSchedules = schedules;
-    },
-    
-    saveSchedule(schedule) {
-      alert('Funcionalidad de guardar horario: próximamente');
-      console.log('Horario guardado:', schedule);
     }
+    // saveSchedule method removed as it's now handled in the ScheduleResults component
   },
   
   template: `
@@ -57,7 +53,6 @@ const app = createApp({
           <div class="col-lg-7">
             <schedule-results 
               :generated-schedules="generatedSchedules"
-              @save-schedule="saveSchedule"
             />
           </div>
         </div>
