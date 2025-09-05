@@ -1,18 +1,20 @@
 import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
 import CourseList from './components/CourseList.js';
 import SubjectSelector from './components/SubjectSelector.js';
+import SectionSelector from './components/SectionSelector.js';
 import ScheduleResults from './components/ScheduleResults.js';
 
 const app = createApp({
   components: {
     CourseList,
     SubjectSelector,
+    SectionSelector,
     ScheduleResults
   },
   
   data() {
     return {
-      currentView: 'subject-selector', // 'subject-selector' o 'course-list'
+      currentView: 'subject-selector', // 'subject-selector', 'section-selector' o 'course-list'
       generatedSchedules: null
     };
   },
@@ -27,7 +29,14 @@ const app = createApp({
   template: `
     <div>
       <header class="header">
-        <h1>Planificador de Horarios UCAB</h1>
+        <div class="d-flex justify-content-between align-items-center">
+          <h1>Planificador de Horarios UCAB</h1>
+          <div class="data-integration-status">
+            <span class="badge bg-success me-2" title="Datos integrados desde HTML y JSON">
+              <i class="bi bi-database-check"></i> Datos Integrados
+            </span>
+          </div>
+        </div>
       </header>
       
       <div class="main-container">
@@ -36,7 +45,13 @@ const app = createApp({
             @click="currentView = 'subject-selector'" 
             :class="['btn', currentView === 'subject-selector' ? 'btn-primary' : 'btn-outline-primary']"
           >
-            Generador de Horarios
+            Selección por Materias
+          </button>
+          <button 
+            @click="currentView = 'section-selector'" 
+            :class="['btn', currentView === 'section-selector' ? 'btn-primary' : 'btn-outline-primary']"
+          >
+            Selección Híbrida
           </button>
           <button 
             @click="currentView = 'course-list'" 
@@ -49,6 +64,17 @@ const app = createApp({
         <div v-if="currentView === 'subject-selector'" class="row">
           <div class="col-lg-5">
             <subject-selector @schedules-generated="handleSchedulesGenerated" />
+          </div>
+          <div class="col-lg-7">
+            <schedule-results 
+              :generated-schedules="generatedSchedules"
+            />
+          </div>
+        </div>
+        
+        <div v-else-if="currentView === 'section-selector'" class="row">
+          <div class="col-lg-5">
+            <section-selector @schedules-generated="handleSchedulesGenerated" />
           </div>
           <div class="col-lg-7">
             <schedule-results 

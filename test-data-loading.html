@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Data Loading</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .course { border: 1px solid #ccc; margin: 10px 0; padding: 10px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Test Data Loading</h1>
+    <div id="status">Cargando datos...</div>
+    <div id="results"></div>
+
+    <script type="module">
+        import CourseService from './js/services/CourseService.js';
+        
+        const statusDiv = document.getElementById('status');
+        const resultsDiv = document.getElementById('results');
+        
+        try {
+            console.log('Iniciando carga de datos...');
+            const courses = await CourseService.loadCourses();
+            
+            statusDiv.innerHTML = `<span class="success">✅ Datos cargados exitosamente: ${courses.length} cursos</span>`;
+            
+            if (courses.length > 0) {
+                resultsDiv.innerHTML = '<h2>Primeros 5 cursos:</h2>';
+                courses.slice(0, 5).forEach(course => {
+                    resultsDiv.innerHTML += `
+                        <div class="course">
+                            <strong>${course.subject}${course.courseNumber}</strong> - ${course.courseTitle}<br>
+                            <small>NRC: ${course.courseReferenceNumber} | Créditos: ${course.creditHourLow} | 
+                            Estado: ${course.openSection ? 'Abierta' : 'Cerrada'} | 
+                            Fuente: ${course.dataSource}</small>
+                        </div>
+                    `;
+                });
+                
+                // Mostrar estadísticas
+                const htmlCount = courses.filter(c => c.dataSource === 'html').length;
+                const jsonCount = courses.filter(c => c.dataSource === 'json').length;
+                
+                resultsDiv.innerHTML += `
+                    <h2>Estadísticas:</h2>
+                    <ul>
+                        <li>Cursos desde HTML: ${htmlCount}</li>
+                        <li>Cursos desde JSON: ${jsonCount}</li>
+                        <li>Total: ${courses.length}</li>
+                    </ul>
+                `;
+            } else {
+                resultsDiv.innerHTML = '<p>No se encontraron cursos.</p>';
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            statusDiv.innerHTML = `<span class="error">❌ Error cargando datos: ${error.message}</span>`;
+        }
+    </script>
+</body>
+</html>

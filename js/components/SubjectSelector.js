@@ -227,6 +227,17 @@ export default {
         .join(", ");
       
       return `${openSections} de ${totalSections} secciones abiertas${nrcs ? ` (NRCs: ${nrcs}${subject.sections.length > 2 ? '...' : ''})` : ''}`;
+    },
+    
+    // Verificar si una materia tiene datos HTML
+    hasHtmlData(subject) {
+      return subject.sections.some(section => section.dataSource === 'html');
+    },
+    
+    // Obtener el nombre del profesor desde datos HTML
+    getHtmlProfessor(subject) {
+      const htmlSection = subject.sections.find(section => section.dataSource === 'html');
+      return htmlSection ? htmlSection.professorName : null;
     }
   },
   
@@ -329,6 +340,18 @@ export default {
                 :class="['subject-item p-3 mb-2', isSubjectSelected(subject.id) ? 'selected' : '']"
                 @click="toggleSubjectSelection(subject)"
               >
+                <!-- Indicador de fuente de datos -->
+                <div v-if="hasHtmlData(subject)" 
+                     class="data-source-indicator data-source-html"
+                     title="Datos actualizados desde HTML">
+                  HTML
+                </div>
+                <div v-else 
+                     class="data-source-indicator data-source-json"
+                     title="Datos desde JSON original">
+                  JSON
+                </div>
+                
                 <div class="d-flex justify-content-between align-items-start">
                   <div style="width: 85%;">
                     <div class="subject-code">{{ subject.subject }}{{ subject.courseNumber }}</div>
@@ -336,6 +359,12 @@ export default {
                     <div class="subject-details mt-1">
                       <div>{{ formatSubjectSections(subject) }}</div>
                       <span class="section-badge credits-badge">{{ subject.creditHourLow || 0 }} créditos</span>
+                      <!-- Mostrar profesor si viene de HTML -->
+                      <span v-if="hasHtmlData(subject) && getHtmlProfessor(subject)" 
+                            class="section-badge" 
+                            :class="getHtmlProfessor(subject) === 'Por Asignar' ? 'section-closed' : 'section-open'">
+                        {{ getHtmlProfessor(subject) }}
+                      </span>
                     </div>
                   </div>
                   

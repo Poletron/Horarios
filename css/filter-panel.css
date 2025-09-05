@@ -1,0 +1,606 @@
+/**
+ * FilterPanel Component Styles
+ * Estilos específicos para el componente FilterPanel del modo híbrido
+ */
+
+/* Variables CSS específicas para FilterPanel */
+:root {
+  --filter-panel-bg: #ffffff;
+  --filter-panel-border: #e9ecef;
+  --filter-panel-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --filter-panel-radius: 12px;
+  
+  --filter-active-color: #007bff;
+  --filter-active-bg: #e3f2fd;
+  --filter-active-border: #bbdefb;
+  
+  --filter-count-bg: #dc3545;
+  --filter-count-color: #ffffff;
+  
+  --day-button-size: 40px;
+  --day-button-active-bg: #007bff;
+  --day-button-active-color: #ffffff;
+  
+  --preset-item-bg: #f8f9fa;
+  --preset-item-border: #dee2e6;
+  
+  --stats-bar-bg: #e9ecef;
+  --stats-fill-bg: #28a745;
+}
+
+/* Contenedor principal del panel */
+.filter-panel {
+  background: var(--filter-panel-bg);
+  border: 1px solid var(--filter-panel-border);
+  border-radius: var(--filter-panel-radius);
+  box-shadow: var(--filter-panel-shadow);
+  margin-bottom: var(--spacing-lg);
+  overflow: hidden;
+  transition: all var(--transition-normal);
+}
+
+.filter-panel:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Header del panel */
+.filter-panel__header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid var(--filter-panel-border);
+  padding: var(--spacing-md) var(--spacing-lg);
+  cursor: pointer;
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  transition: background-color var(--transition-fast);
+}
+
+.filter-panel__header:hover {
+  background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+}
+
+.filter-panel__title {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filter-panel__title h3 {
+  color: var(--dark-text);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.filter-count-badge {
+  background: var(--filter-count-bg);
+  color: var(--filter-count-color);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  min-width: 20px;
+  text-align: center;
+  animation: pulse 2s infinite;
+}
+
+.filter-panel__stats {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.result-count {
+  font-size: 0.9rem;
+  color: var(--light-text);
+  font-weight: 500;
+}
+
+.percentage {
+  color: var(--filter-active-color);
+  font-weight: 600;
+}
+
+.filter-panel__toggle {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--light-text);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-panel__toggle:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--dark-text);
+}
+
+.filter-panel__toggle.expanded {
+  transform: rotate(0deg);
+}
+
+/* Contenido del panel */
+.filter-panel__content {
+  padding: var(--spacing-lg);
+  animation: slideDown var(--transition-normal) ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Secciones de filtros */
+.filter-section {
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.filter-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* Inputs y selects de filtros */
+.filter-input,
+.filter-select {
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  transition: all var(--transition-fast);
+  background: white;
+  font-size: 0.9rem;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  border-color: var(--filter-active-color);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+  outline: none;
+}
+
+.filter-input::placeholder {
+  color: #adb5bd;
+  font-style: italic;
+}
+
+/* Opciones de disponibilidad */
+.availability-options {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.availability-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: white;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.availability-option:hover {
+  border-color: var(--filter-active-color);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.availability-option.active {
+  border-color: var(--filter-active-color);
+  background: var(--filter-active-bg);
+  color: var(--filter-active-color);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.availability-icon {
+  font-size: 1.1rem;
+}
+
+.availability-label {
+  white-space: nowrap;
+}
+
+/* Filtros de horario */
+.schedule-filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: var(--spacing-md);
+}
+
+.schedule-filter-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--dark-text);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.schedule-active-indicator {
+  color: var(--filter-active-color);
+  font-size: 0.8rem;
+  animation: pulse 2s infinite;
+}
+
+.schedule-filter-toggle {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: var(--light-text);
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.schedule-filter-toggle:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--dark-text);
+}
+
+.schedule-filter-content {
+  animation: slideDown var(--transition-normal) ease;
+}
+
+/* Selector de días */
+.day-selector {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.day-button {
+  width: var(--day-button-size);
+  height: var(--day-button-size);
+  border: 2px solid var(--border-color);
+  border-radius: 50%;
+  background: white;
+  color: var(--dark-text);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-button:hover {
+  border-color: var(--filter-active-color);
+  transform: scale(1.1);
+  box-shadow: var(--shadow-sm);
+}
+
+.day-button.active {
+  background: var(--day-button-active-bg);
+  border-color: var(--day-button-active-bg);
+  color: var(--day-button-active-color);
+  transform: scale(1.1);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+
+/* Acciones del panel */
+.filter-panel__actions {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid #f0f0f0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.action-buttons .btn {
+  font-size: 0.85rem;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+}
+
+.action-buttons .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Estadísticas de filtrado */
+.filter-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-xs);
+}
+
+.stats-text {
+  font-size: 0.85rem;
+  color: var(--light-text);
+  font-weight: 500;
+}
+
+.stats-bar {
+  width: 120px;
+  height: 4px;
+  background: var(--stats-bar-bg);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.stats-fill {
+  height: 100%;
+  background: var(--stats-fill-bg);
+  border-radius: 2px;
+  transition: width var(--transition-normal) ease;
+}
+
+/* Panel de presets */
+.presets-panel {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: #f8f9fa;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--preset-item-border);
+  animation: slideDown var(--transition-normal) ease;
+}
+
+.presets-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.presets-header h5 {
+  color: var(--dark-text);
+  font-weight: 600;
+}
+
+/* Formulario de preset */
+.preset-form {
+  margin-bottom: var(--spacing-md);
+  animation: slideDown var(--transition-normal) ease;
+}
+
+.preset-form .input-group {
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.preset-form .form-control {
+  border: none;
+  font-size: 0.9rem;
+}
+
+.preset-form .btn {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Lista de presets */
+.presets-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.presets-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.presets-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.presets-list::-webkit-scrollbar-thumb {
+  background: var(--filter-active-color);
+  border-radius: 3px;
+}
+
+.empty-presets {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--light-text);
+}
+
+.preset-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: white;
+  border: 1px solid var(--preset-item-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-xs);
+  transition: all var(--transition-fast);
+}
+
+.preset-item:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--filter-active-color);
+}
+
+.preset-info {
+  flex: 1;
+}
+
+.preset-name {
+  font-weight: 600;
+  color: var(--dark-text);
+  font-size: 0.9rem;
+}
+
+.preset-meta {
+  font-size: 0.75rem;
+  color: var(--light-text);
+  margin-top: 2px;
+}
+
+.preset-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.preset-actions .btn {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  border-radius: var(--radius-sm);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .filter-panel__header {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .filter-panel__content {
+    padding: var(--spacing-md);
+  }
+  
+  .filter-panel__title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+  
+  .availability-options {
+    flex-direction: column;
+  }
+  
+  .availability-option {
+    justify-content: center;
+  }
+  
+  .day-selector {
+    justify-content: center;
+  }
+  
+  .filter-panel__actions {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .action-buttons {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .filter-stats {
+    align-items: center;
+    text-align: center;
+  }
+  
+  .stats-bar {
+    width: 100%;
+    max-width: 200px;
+  }
+  
+  .presets-header {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: stretch;
+  }
+  
+  .preset-item {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: stretch;
+  }
+  
+  .preset-actions {
+    justify-content: center;
+  }
+}
+
+/* Animaciones adicionales */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Estados de carga */
+.filter-panel.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.filter-panel.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mejoras de accesibilidad */
+.filter-panel button:focus,
+.filter-panel input:focus,
+.filter-panel select:focus {
+  outline: 2px solid var(--filter-active-color);
+  outline-offset: 2px;
+}
+
+.filter-panel [role="button"] {
+  cursor: pointer;
+}
+
+/* Indicadores visuales mejorados */
+.filter-input:not(:placeholder-shown) {
+  border-color: var(--filter-active-color);
+  background: var(--filter-active-bg);
+}
+
+.filter-select:not([value=""]) {
+  border-color: var(--filter-active-color);
+  background: var(--filter-active-bg);
+}
+
+/* Transiciones suaves para todos los elementos */
+.filter-panel * {
+  transition: color var(--transition-fast), 
+              background-color var(--transition-fast), 
+              border-color var(--transition-fast), 
+              transform var(--transition-fast), 
+              box-shadow var(--transition-fast),
+              opacity var(--transition-fast);
+}

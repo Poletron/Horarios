@@ -250,6 +250,18 @@ export default {
                   :class="['course-item p-3 mb-2', isCourseSelected(course.id) ? 'selected' : '']"
                   @click="toggleCourseSelection(course)"
                 >
+                  <!-- Indicador de fuente de datos -->
+                  <div v-if="course.dataSource === 'html'" 
+                       class="data-source-indicator data-source-html"
+                       title="Datos actualizados desde HTML">
+                    HTML
+                  </div>
+                  <div v-else 
+                       class="data-source-indicator data-source-json"
+                       title="Datos desde JSON original">
+                    JSON
+                  </div>
+                  
                   <div class="d-flex justify-content-between align-items-start">
                     <div style="width: 85%;">
                       <div class="course-code">{{ course.subject }}{{ course.courseNumber }}-{{ course.sequenceNumber }}</div>
@@ -265,6 +277,12 @@ export default {
                           <span class="section-badge credits-badge">{{ course.creditHourLow || 0 }} créditos</span>
                           <span class="text-muted small">{{ course.scheduleType }}</span>
                           <span class="section-badge nrc-badge">NRC: {{ course.courseReferenceNumber }}</span>
+                          <!-- Mostrar profesor si viene de HTML -->
+                          <span v-if="course.dataSource === 'html' && course.professorName" 
+                                class="section-badge" 
+                                :class="course.professorName === 'Por Asignar' ? 'section-closed' : 'section-open'">
+                            {{ course.professorName }}
+                          </span>
                         </div>
                       </div>
                     </div>

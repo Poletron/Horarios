@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test - Integración HTML/JSON</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .test-result { padding: 10px; margin: 10px 0; border-radius: 5px; }
+    .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>Test de Integración HTML/JSON</h1>
+  <div id="results"></div>
+
+  <script type="module">
+    import CourseService from './js/services/CourseService.js';
+
+    async function testIntegration() {
+      const resultsDiv = document.getElementById('results');
+      
+      try {
+        resultsDiv.innerHTML += '<div class="test-result info">🔄 Iniciando test de integración...</div>';
+        
+        const courses = await CourseService.loadCourses();
+        
+        const htmlCourses = courses.filter(c => c.dataSource === 'html');
+        const jsonCourses = courses.filter(c => c.dataSource === 'json');
+        
+        resultsDiv.innerHTML += `<div class="test-result success">✅ Carga exitosa: ${courses.length} cursos totales</div>`;
+        resultsDiv.innerHTML += `<div class="test-result info">📊 Distribución: ${htmlCourses.length} HTML + ${jsonCourses.length} JSON</div>`;
+        
+        if (htmlCourses.length > 0) {
+          const sampleHtml = htmlCourses[0];
+          resultsDiv.innerHTML += '<div class="test-result success">✅ Datos HTML detectados</div>';
+          resultsDiv.innerHTML += `<div class="test-result info">📝 Ejemplo HTML: ${sampleHtml.subject}${sampleHtml.courseNumber} - ${sampleHtml.courseTitle}</div>`;
+          if (sampleHtml.professorName) {
+            resultsDiv.innerHTML += `<div class="test-result info">👨‍🏫 Profesor: ${sampleHtml.professorName}</div>`;
+          }
+        }
+        
+        if (jsonCourses.length > 0) {
+          const sampleJson = jsonCourses[0];
+          resultsDiv.innerHTML += '<div class="test-result success">✅ Datos JSON detectados</div>';
+          resultsDiv.innerHTML += `<div class="test-result info">📝 Ejemplo JSON: ${sampleJson.subject}${sampleJson.courseNumber} - ${sampleJson.courseTitle}</div>`;
+        }
+        
+        // Test data prioritization
+        const duplicateNRCs = new Set();
+        const nrcCounts = {};
+        courses.forEach(course => {
+          const nrc = course.courseReferenceNumber;
+          nrcCounts[nrc] = (nrcCounts[nrc] || 0) + 1;
+          if (nrcCounts[nrc] > 1) {
+            duplicateNRCs.add(nrc);
+          }
+        });
+        
+        if (duplicateNRCs.size === 0) {
+          resultsDiv.innerHTML += '<div class="test-result success">✅ Sin duplicados de NRC - Priorización funcionando correctamente</div>';
+        } else {
+          resultsDiv.innerHTML += `<div class="test-result error">❌ Encontrados ${duplicateNRCs.size} NRCs duplicados</div>`;
+        }
+        
+        resultsDiv.innerHTML += '<div class="test-result success">🎉 Test de integración completado exitosamente</div>';
+        
+      } catch (error) {
+        resultsDiv.innerHTML += `<div class="test-result error">❌ Error: ${error.message}</div>`;
+        console.error('Test error:', error);
+      }
+    }
+
+    testIntegration();
+  </script>
+</body>
+</html>

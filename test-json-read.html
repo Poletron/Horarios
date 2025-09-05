@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test JSON Reading</title>
+</head>
+<body>
+    <h1>Test de lectura de JSON</h1>
+    <div id="results"></div>
+    <div id="generado"></div>
+
+    <script>
+        // Probar results.json
+        fetch('results.json')
+            .then(response => {
+                console.log('results.json response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('results.json loaded successfully:', data);
+                document.getElementById('results').innerHTML = `
+                    <h2>results.json - ✅ Éxito</h2>
+                    <p>Registros: ${data.data ? data.data.length : 'N/A'}</p>
+                `;
+            })
+            .catch(error => {
+                console.error('Error loading results.json:', error);
+                document.getElementById('results').innerHTML = `
+                    <h2>results.json - ❌ Error</h2>
+                    <p>${error.message}</p>
+                `;
+            });
+
+        // Probar generado.json
+        fetch('generado.json')
+            .then(response => {
+                console.log('generado.json response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('generado.json loaded successfully:', data);
+                document.getElementById('generado').innerHTML = `
+                    <h2>generado.json - ✅ Éxito</h2>
+                    <p>Registros: ${Array.isArray(data) ? data.length : 'N/A'}</p>
+                `;
+            })
+            .catch(error => {
+                console.error('Error loading generado.json:', error);
+                document.getElementById('generado').innerHTML = `
+                    <h2>generado.json - ❌ Error</h2>
+                    <p>${error.message}</p>
+                `;
+            });
+    </script>
+</body>
+</html>

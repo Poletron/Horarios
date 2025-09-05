@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test FilterPanel Component</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/filter-panel.css">
+    
+    <!-- Vue.js -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Test FilterPanel Component</h1>
+        
+        <div id="app">
+            <div v-if="loading" class="alert alert-info">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                Cargando datos...
+            </div>
+            
+            <div v-else-if="error" class="alert alert-danger">
+                <strong>Error:</strong> {{ error }}
+            </div>
+            
+            <filter-panel
+                v-else
+                :subjects="subjects"
+                :courses="courses"
+                :campuses="campuses"
+                :subject-codes="subjectCodes"
+                @filters-applied="onFiltersApplied"
+                @preset-saved="onPresetSaved"
+                @preset-loaded="onPresetLoaded"
+                @preset-deleted="onPresetDeleted"
+            ></filter-panel>
+            
+            <!-- Resultados de prueba -->
+            <div v-if="!loading && !error" class="mt-4">
+                <h3>Resultados del Filtrado</h3>
+                <div class="alert alert-info">
+                    <strong>Materias filtradas:</strong> {{ filteredSubjects.length }} de {{ subjects.length }}
+                </div>
+                
+                <div v-if="filteredSubjects.length > 0" class="row">
+                    <div v-for="subject in filteredSubjects.slice(0, 5)" :key="subject.id" class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ subject.subject }}{{ subject.courseNumber }}</h5>
+                                <p class="card-text">{{ subject.courseTitle }}</p>
+                                <small class="text-muted">{{ subject.sections.length }} secciones</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div v-if="filteredSubjects.length > 5" class="text-muted">
+                    ... y {{ filteredSubjects.length - 5 }} materias más
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import FilterPanel from './js/components/FilterPanel.js';
+        import CourseService from './js/services/CourseService.js';
+        import ScheduleGeneratorService from './js/services/ScheduleGeneratorService.js';
+        
+        const { createApp } = Vue;
+        
+        // Datos de prueba (se reemplazarán con datos reales)
+        const testSubjects = [
+            {
+                id: 'COMP101',
+                subject: 'COMP',
+                courseNumber: '101',
+                courseTitle: 'Introducción a la Programación',
+                creditHourLow: 3,
+                sections: [
+                    {
+                        id: 'COMP101-01',
+                        courseReferenceNumber: '12345',
+                        sequenceNumber: '01',
+                        openSection: true,
+                        meetingsFaculty: [
+                            {
+                                meetingTime: {
+                                    monday: true,
+                                    tuesday: false,
+                                    wednesday: true,
+                                    thursday: false,
+                                    friday: true,
+                                    saturday: false,
+                                    sunday: false,
+                                    beginTime: '0800',
+                                    endTime: '0950'
+                                },
+                                faculty: [
+                                    { displayName: 'Dr. Juan Pérez' }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        id: 'COMP101-02',
+                        courseReferenceNumber: '12346',
+                        sequenceNumber: '02',
+                        openSection: false,
+                        meetingsFaculty: [
+                            {
+                                meetingTime: {
+                                    monday: false,
+                                    tuesday: true,
+                                    wednesday: false,
+                                    thursday: true,
+                                    friday: false,
+                                    saturday: false,
+                                    sunday: false,
+                                    beginTime: '1400',
+                                    endTime: '1550'
+                                },
+                                faculty: [
+                                    { displayName: 'Dra. María González' }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'MATH201',
+                subject: 'MATH',
+                courseNumber: '201',
+                courseTitle: 'Cálculo Diferencial',
+                creditHourLow: 4,
+                sections: [
+                    {
+                        id: 'MATH201-01',
+                        courseReferenceNumber: '12347',
+                        sequenceNumber: '01',
+                        openSection: true,
+                        meetingsFaculty: [
+                            {
+                                meetingTime: {
+                                    monday: true,
+                                    tuesday: false,
+                                    wednesday: true,
+                                    thursday: false,
+                                    friday: true,
+                                    saturday: false,
+                                    sunday: false,
+                                    beginTime: '1000',
+                                    endTime: '1150'
+                                },
+                                faculty: [
+                                    { displayName: 'Dr. Carlos Rodríguez' }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'PHYS301',
+                subject: 'PHYS',
+                courseNumber: '301',
+                courseTitle: 'Física Moderna',
+                creditHourLow: 3,
+                sections: [
+                    {
+                        id: 'PHYS301-01',
+                        courseReferenceNumber: '12348',
+                        sequenceNumber: '01',
+                        openSection: true,
+                        meetingsFaculty: [
+                            {
+                                meetingTime: {
+                                    monday: false,
+                                    tuesday: true,
+                                    wednesday: false,
+                                    thursday: true,
+                                    friday: false,
+                                    saturday: false,
+                                    sunday: false,
+                                    beginTime: '1600',
+                                    endTime: '1750'
+                                },
+                                faculty: [
+                                    { displayName: 'Dr. Ana Martínez' }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ];
+        
+        const testCourses = [
+            {
+                subject: 'COMP',
+                courseNumber: '101',
+                campusDescription: 'Campus Principal'
+            },
+            {
+                subject: 'MATH',
+                courseNumber: '201',
+                campusDescription: 'Campus Principal'
+            },
+            {
+                subject: 'PHYS',
+                courseNumber: '301',
+                campusDescription: 'Campus Norte'
+            }
+        ];
+        
+        createApp({
+            components: {
+                FilterPanel
+            },
+            data() {
+                return {
+                    subjects: [],
+                    courses: [],
+                    campuses: [],
+                    subjectCodes: [],
+                    filteredSubjects: [],
+                    loading: true,
+                    error: null
+                };
+            },
+            async mounted() {
+                try {
+                    console.log('Cargando datos reales...');
+                    this.courses = await CourseService.loadCourses();
+                    this.subjects = ScheduleGeneratorService.groupCoursesBySubject(this.courses);
+                    this.filteredSubjects = [...this.subjects];
+                    
+                    // Extraer códigos de materias y campus únicos
+                    this.subjectCodes = [...new Set(this.subjects.map(s => s.subject))].sort();
+                    const allCampuses = new Set();
+                    this.courses.forEach(course => {
+                        if (course.campusDescription && course.campusDescription.trim()) {
+                            allCampuses.add(course.campusDescription);
+                        }
+                    });
+                    this.campuses = [...allCampuses].sort();
+                    
+                    console.log(`Datos cargados: ${this.subjects.length} materias, ${this.courses.length} cursos`);
+                    this.loading = false;
+                } catch (error) {
+                    console.error('Error cargando datos:', error);
+                    this.error = error.message;
+                    this.loading = false;
+                }
+            },
+            methods: {
+                onFiltersApplied(data) {
+                    console.log('Filtros aplicados:', data);
+                    this.filteredSubjects = data.filteredSubjects;
+                },
+                onPresetSaved(preset) {
+                    console.log('Preset guardado:', preset);
+                },
+                onPresetLoaded(preset) {
+                    console.log('Preset cargado:', preset);
+                },
+                onPresetDeleted(presetId) {
+                    console.log('Preset eliminado:', presetId);
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

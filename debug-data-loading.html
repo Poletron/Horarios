@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Data Loading</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .error { color: red; }
+        .success { color: green; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Debug: Carga de Datos JSON</h1>
+    
+    <div class="section">
+        <h2>1. Carga de results.json</h2>
+        <div id="results-status"></div>
+        <pre id="results-data"></pre>
+    </div>
+    
+    <div class="section">
+        <h2>2. Carga de generado.json</h2>
+        <div id="generado-status"></div>
+        <pre id="generado-data"></pre>
+    </div>
+    
+    <div class="section">
+        <h2>3. Conversión de datos HTML</h2>
+        <div id="conversion-status"></div>
+        <pre id="conversion-data"></pre>
+    </div>
+
+    <script type="module">
+        // Función de conversión simplificada para debug
+        function convertHtmlToAppFormat(htmlSchedule) {
+            const cleanCode = htmlSchedule.codigo.replace(/'/g, '').trim();
+            const codeParts = cleanCode.split('-');
+            const subject = codeParts[0] || '';
+            const courseNumber = (codeParts[1] || '').replace(/[^0-9]/g, '');
+            const credits = htmlSchedule.tax ? parseInt(htmlSchedule.tax.replace('TA', '')) || 0 : 0;
+            
+            return {
+                id: parseInt(htmlSchedule.nrc) || Math.random() * 1000000,
+                subject: subject,
+                courseNumber: courseNumber,
+                courseTitle: htmlSchedule.asignatura.replace('.', ''),
+                courseReferenceNumber: htmlSchedule.nrc,
+                scheduleType: htmlSchedule.mod,
+                creditHourLow: credits,
+                professorName: htmlSchedule.profesor,
+                originalData: htmlSchedule
+            };
+        }
+
+        // Test results.json
+        try {
+            const resultsResponse = await fetch('results.json');
+            if (resultsResponse.ok) {
+                const resultsData = await resultsResponse.json();
+                document.getElementById('results-status').innerHTML = 
+                    `<span class="success">✅ Cargado exitosamente</span>`;
+                document.getElementById('results-data').textContent = 
+                    `Estructura: ${JSON.stringify(Object.keys(resultsData), null, 2)}\n` +
+                    `Total registros: ${resultsData.data ? resultsData.data.length : 'N/A'}\n` +
+                    `Primer registro: ${JSON.stringify(resultsData.data?.[0], null, 2)}`;
+            } else {
+                throw new Error(`HTTP ${resultsResponse.status}`);
+            }
+        } catch (error) {
+            document.getElementById('results-status').innerHTML = 
+                `<span class="error">❌ Error: ${error.message}</span>`;
+        }
+
+        // Test generado.json
+        try {
+            const generadoResponse = await fetch('generado.json');
+            if (generadoResponse.ok) {
+                const generadoData = await generadoResponse.json();
+                document.getElementById('generado-status').innerHTML = 
+                    `<span class="success">✅ Cargado exitosamente</span>`;
+                document.getElementById('generado-data').textContent = 
+                    `Estructura: ${JSON.stringify(Object.keys(generadoData), null, 2)}\n` +
+                    `Total registros: ${generadoData.data ? generadoData.data.length : 'N/A'}\n` +
+                    `Primer registro: ${JSON.stringify(generadoData.data?.[0], null, 2)}`;
+                
+                // Test conversión
+                if (generadoData.data && generadoData.data.length > 0) {
+                    const firstRecord = generadoData.data[0];
+                    const converted = convertHtmlToAppFormat(firstRecord);
+                    
+                    document.getElementById('conversion-status').innerHTML = 
+                        `<span class="success">✅ Conversión exitosa</span>`;
+                    document.getElementById('conversion-data').textContent = 
+                        `Datos originales: ${JSON.stringify(firstRecord, null, 2)}\n\n` +
+                        `Datos convertidos: ${JSON.stringify(converted, null, 2)}`;
+                } else {
+                    document.getElementById('conversion-status').innerHTML = 
+                        `<span class="error">❌ No hay datos para convertir</span>`;
+                }
+            } else {
+                throw new Error(`HTTP ${generadoResponse.status}`);
+            }
+        } catch (error) {
+            document.getElementById('generado-status').innerHTML = 
+                `<span class="error">❌ Error: ${error.message}</span>`;
+        }
+    </script>
+</body>
+</html>
