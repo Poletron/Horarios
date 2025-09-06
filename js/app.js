@@ -2,6 +2,7 @@ import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
 import CourseList from './components/CourseList.js';
 import SubjectSelector from './components/SubjectSelector.js';
 import SectionSelector from './components/SectionSelector.js';
+import SelectionPanel from './components/SelectionPanel.js';
 import ScheduleResults from './components/ScheduleResults.js';
 
 const app = createApp({
@@ -9,6 +10,7 @@ const app = createApp({
     CourseList,
     SubjectSelector,
     SectionSelector,
+    SelectionPanel,
     ScheduleResults
   },
   

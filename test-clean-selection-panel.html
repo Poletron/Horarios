@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Clean Selection Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+    <link href="css/selection-panel.css" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">🧪 Test - Clean Selection Panel</h1>
+                
+                <div id="app">
+                    <!-- Enhanced Selection Panel -->
+                    <div class="selection-panel">
+                        <!-- Enhanced Header -->
+                        <div class="selection-panel__header">
+                            <div class="header-main">
+                                <div class="header-title-section">
+                                    <h2 class="panel-title">📋 Mis Selecciones</h2>
+                                    <div class="header-stats" v-if="selectedItems.length > 0">
+                                        <div class="stat-chip primary">
+                                            <span class="stat-value">{{ selectedItems.length }}</span>
+                                            <span class="stat-text">elementos</span>
+                                        </div>
+                                        <div class="stat-chip secondary">
+                                            <span class="stat-value">{{ totalCredits }}</span>
+                                            <span class="stat-text">créditos</span>
+                                        </div>
+                                        <div v-if="hasConflicts" class="stat-chip warning">
+                                            <span class="stat-value">{{ conflictCount }}</span>
+                                            <span class="stat-text">conflictos</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="header-actions" v-if="selectedItems.length > 0">
+                                    <button @click="clearAllSelections" class="header-action-btn clear">
+                                        <i class="fas fa-trash-alt"></i>
+                                        <span>Limpiar Todo</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="header-subtitle">
+                                <p v-if="selectedItems.length === 0" class="subtitle-text empty">
+                                    Selecciona materias o secciones para crear tu horario personalizado
+                                </p>
+                                <p v-else class="subtitle-text">
+                                    <span class="priority-count" v-if="priorityCount > 0">
+                                        {{ priorityCount }} prioritario{{ priorityCount > 1 ? 's' : '' }}
+                                    </span>
+                                    <span class="separator" v-if="priorityCount > 0 && candidateCount > 0"> • </span>
+                                    <span class="candidate-count" v-if="candidateCount > 0">
+                                        {{ candidateCount }} candidato{{ candidateCount > 1 ? 's' : '' }}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Management Actions -->
+                        <div v-if="selectedItems.length > 0" class="management-section">
+                            <div class="management-header">
+                                <h3 class="management-title">⚙️ Gestión de Selecciones</h3>
+                            </div>
+                            
+                            <div class="management-actions">
+                                <div class="action-group">
+                                    <div class="action-label">Cambiar tipo de todos los elementos:</div>
+                                    <div class="action-buttons">
+                                        <button @click="selectAllPriority" 
+                                                class="management-btn priority" 
+                                                :disabled="candidateCount === 0"
+                                                title="Marcar todos como prioritarios">
+                                            <div class="btn-icon">🔴</div>
+                                            <div class="btn-content">
+                                                <span class="btn-title">Todos Prioritarios</span>
+                                                <span class="btn-subtitle">Obligatorios en todos los horarios</span>
+                                            </div>
+                                        </button>
+                                        
+                                        <button @click="selectAllCandidate" 
+                                                class="management-btn candidate"
+                                                :disabled="priorityCount === 0"
+                                                title="Marcar todos como candidatos">
+                                            <div class="btn-icon">🟡</div>
+                                            <div class="btn-content">
+                                                <span class="btn-title">Todos Candidatos</span>
+                                                <span class="btn-subtitle">Opcionales si no hay conflictos</span>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Content Area -->
+                        <div class="selection-panel__content">
+                            <div v-if="selectedItems.length === 0" class="empty-state">
+                                <div class="empty-state-icon">📝</div>
+                                <h5>No has seleccionado ningún elemento</h5>
+                                <p class="text-muted">Haz clic en las materias o expande para seleccionar secciones específicas</p>
+                            </div>
+                            
+                            <div v-else>
+                                <!-- Sample Selected Items -->
+                                <div class="selection-section priority-section" v-if="priorityCount > 0">
+                                    <div class="section-header">
+                                        <div class="section-title">
+                                            <span class="section-badge priority">🔴 Elementos Prioritarios</span>
+                                            <span class="section-count">{{ priorityCount }}</span>
+                                        </div>
+                                        <div class="section-description">
+                                            Elementos que deben estar en todos los horarios generados
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="items-grid">
+                                        <div v-for="item in samplePriorityItems" :key="item.id" class="selection-item priority">
+                                            <div class="item-header">
+                                                <div class="item-code">{{ item.code }}</div>
+                                                <div class="item-actions">
+                                                    <button class="action-btn change-type" title="Cambiar a candidata">🔄</button>
+                                                    <button class="action-btn remove" title="Eliminar">🗑️</button>
+                                                </div>
+                                            </div>
+                                            <div class="item-title">{{ item.title }}</div>
+                                            <div class="item-details">
+                                                <span class="credits">🎓 {{ item.credits }} créditos</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="selection-section candidate-section" v-if="candidateCount > 0">
+                                    <div class="section-header">
+                                        <div class="section-title">
+                                            <span class="section-badge candidate">🟡 Elementos Candidatos</span>
+                                            <span class="section-count">{{ candidateCount }}</span>
+                                        </div>
+                                        <div class="section-description">
+                                            Elementos opcionales que se incluirán si no generan conflictos
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="items-grid">
+                                        <div v-for="item in sampleCandidateItems" :key="item.id" class="selection-item candidate">
+                                            <div class="item-header">
+                                                <div class="item-code">{{ item.code }}</div>
+                                                <div class="item-actions">
+                                                    <button class="action-btn change-type" title="Cambiar a prioritaria">🔄</button>
+                                                    <button class="action-btn remove" title="Eliminar">🗑️</button>
+                                                </div>
+                                            </div>
+                                            <div class="item-title">{{ item.title }}</div>
+                                            <div class="item-details">
+                                                <span class="credits">🎓 {{ item.credits }} créditos</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Test Controls -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="m-0">🔧 Test Controls</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Actions:</h6>
+                                    <button @click="addSampleItems" class="btn btn-sm btn-primary me-2">Add Sample Items</button>
+                                    <button @click="toggleConflicts" class="btn btn-sm btn-warning me-2">Toggle Conflicts</button>
+                                    <button @click="clearAllSelections" class="btn btn-sm btn-danger">Clear All</button>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Current State:</h6>
+                                    <p>
+                                        Total Items: {{ selectedItems.length }}<br>
+                                        Priority: {{ priorityCount }}<br>
+                                        Candidate: {{ candidateCount }}<br>
+                                        Credits: {{ totalCredits }}<br>
+                                        Conflicts: {{ hasConflicts ? conflictCount : 0 }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    selectedItems: [],
+                    hasConflicts: false,
+                    conflictCount: 0,
+                    sampleItems: [
+                        { id: 1, code: 'MAT1001', title: 'Cálculo I', credits: 4, type: 'priority' },
+                        { id: 2, code: 'FIS1001', title: 'Física I', credits: 4, type: 'priority' },
+                        { id: 3, code: 'QUI1001', title: 'Química General', credits: 3, type: 'candidate' },
+                        { id: 4, code: 'INFO1001', title: 'Programación I', credits: 4, type: 'candidate' },
+                        { id: 5, code: 'BIO1001', title: 'Biología General', credits: 3, type: 'priority' }
+                    ]
+                };
+            },
+            
+            computed: {
+                priorityCount() {
+                    return this.selectedItems.filter(item => item.type === 'priority').length;
+                },
+                
+                candidateCount() {
+                    return this.selectedItems.filter(item => item.type === 'candidate').length;
+                },
+                
+                totalCredits() {
+                    return this.selectedItems.reduce((sum, item) => sum + item.credits, 0);
+                },
+                
+                samplePriorityItems() {
+                    return this.selectedItems.filter(item => item.type === 'priority');
+                },
+                
+                sampleCandidateItems() {
+                    return this.selectedItems.filter(item => item.type === 'candidate');
+                }
+            },
+            
+            methods: {
+                addSampleItems() {
+                    this.selectedItems = [...this.sampleItems];
+                },
+                
+                toggleConflicts() {
+                    this.hasConflicts = !this.hasConflicts;
+                    this.conflictCount = this.hasConflicts ? Math.floor(Math.random() * 3) + 1 : 0;
+                },
+                
+                selectAllPriority() {
+                    this.selectedItems.forEach(item => {
+                        item.type = 'priority';
+                    });
+                },
+                
+                selectAllCandidate() {
+                    this.selectedItems.forEach(item => {
+                        item.type = 'candidate';
+                    });
+                },
+                
+                clearAllSelections() {
+                    this.selectedItems = [];
+                    this.hasConflicts = false;
+                    this.conflictCount = 0;
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

@@ -212,21 +212,22 @@ export default {
         return 'Sin profesor asignado';
       }
       
-      const professors = section.meetingsFaculty
-        .map(meeting => {
-          if (meeting.faculty && meeting.faculty.displayName) {
-            return meeting.faculty.displayName;
-          }
-          return null;
-        })
-        .filter(prof => prof)
-        .filter((prof, index, arr) => arr.indexOf(prof) === index); // Remove duplicates
+      const allProfessors = [];
       
-      if (professors.length === 0) {
-        return 'Sin profesor asignado';
-      }
+      section.meetingsFaculty.forEach(meeting => {
+        if (meeting.faculty && Array.isArray(meeting.faculty)) {
+          meeting.faculty.forEach(faculty => {
+            if (faculty.displayName && 
+                faculty.displayName.trim() !== '' && 
+                faculty.displayName !== 'Por Asignar' &&
+                !allProfessors.includes(faculty.displayName)) {
+              allProfessors.push(faculty.displayName);
+            }
+          });
+        }
+      });
       
-      return professors.join(', ');
+      return allProfessors.length > 0 ? allProfessors.join(', ') : 'Sin profesor asignado';
     },
 
     /**

@@ -268,21 +268,22 @@ export default {
         return 'Sin profesor asignado';
       }
       
-      const professors = section.meetingsFaculty
-        .map(meeting => {
-          if (meeting.faculty && meeting.faculty.displayName) {
-            return meeting.faculty.displayName;
-          }
-          return null;
-        })
-        .filter(prof => prof)
-        .filter((prof, index, arr) => arr.indexOf(prof) === index); // Remove duplicates
+      const allProfessors = [];
       
-      if (professors.length === 0) {
-        return 'Sin profesor asignado';
-      }
+      section.meetingsFaculty.forEach(meeting => {
+        if (meeting.faculty && Array.isArray(meeting.faculty)) {
+          meeting.faculty.forEach(faculty => {
+            if (faculty.displayName && 
+                faculty.displayName.trim() !== '' && 
+                faculty.displayName !== 'Por Asignar' &&
+                !allProfessors.includes(faculty.displayName)) {
+              allProfessors.push(faculty.displayName);
+            }
+          });
+        }
+      });
       
-      return professors.join(', ');
+      return allProfessors.length > 0 ? allProfessors.join(', ') : 'Sin profesor asignado';
     },
 
     formatSubjectSections(subject) {
@@ -295,6 +296,29 @@ export default {
         .join(", ");
       
       return `${openSections} de ${totalSections} secciones abiertas${nrcs ? ` (NRCs: ${nrcs}${subject.sections.length > 2 ? '...' : ''})` : ''}`;
+    },
+
+    formatSubjectProfessors(subject) {
+      if (!subject.sections || subject.sections.length === 0) {
+        return 'Sin secciones disponibles';
+      }
+      
+      const allProfessors = new Set();
+      
+      subject.sections.forEach(section => {
+        const professorName = this.formatSectionProfessor(section);
+        if (professorName && professorName !== 'Sin profesor asignado') {
+          allProfessors.add(professorName);
+        }
+      });
+      
+      if (allProfessors.size === 0) {
+        return 'Sin profesor asignado';
+      } else if (allProfessors.size === 1) {
+        return Array.from(allProfessors)[0];
+      } else {
+        return `${allProfessors.size} profesores diferentes`;
+      }
     },
 
     // Event handlers
@@ -326,76 +350,48 @@ export default {
 
   template: `
     <div class="selection-panel">
-      <!-- Panel Header with Summary -->
+      <!-- Enhanced Header -->
       <div class="selection-panel__header">
-        <div class="selection-panel__title">
-          <h2 class="m-0">📋 Elementos Seleccionados</h2>
-          <div class="selection-panel__summary-badges">
-            <span class="summary-badge total">{{ selectionStats.totalItems }} total</span>
-            <span class="summary-badge priority">{{ priorityItems.length }} prioritarios</span>
-            <span class="summary-badge candidate">{{ candidateItems.length }} candidatos</span>
+        <div class="header-main">
+          <div class="header-title-section">
+            <h2 class="panel-title">📋 Mis Selecciones</h2>
+            <div class="header-stats" v-if="selectedItems.length > 0">
+              <div class="stat-chip primary">
+                <span class="stat-value">{{ selectedItems.length }}</span>
+                <span class="stat-text">elementos</span>
+              </div>
+              <div class="stat-chip secondary">
+                <span class="stat-value">{{ selectionStats.totalCredits }}</span>
+                <span class="stat-text">créditos</span>
+              </div>
+              <div v-if="hasConflicts" class="stat-chip warning">
+                <span class="stat-value">{{ selectionStats.conflicts.length }}</span>
+                <span class="stat-text">conflictos</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="header-actions" v-if="selectedItems.length > 0">
+            <button @click="clearAllSelections" class="header-action-btn clear">
+              <i class="fas fa-trash-alt"></i>
+              <span>Limpiar Todo</span>
+            </button>
           </div>
         </div>
         
-        <!-- Conflict Indicator -->
-        <div v-if="hasConflicts" class="conflict-indicator" :class="conflictSeverity">
-          <i class="fas fa-exclamation-triangle"></i>
-          <span>{{ selectionStats.conflicts.length }} conflicto{{ selectionStats.conflicts.length > 1 ? 's' : '' }}</span>
-        </div>
-      </div>
-
-      <!-- Statistics Summary -->
-      <div class="selection-panel__stats">
-        <div class="stats-grid">
-          <div class="stat-card credits">
-            <div class="stat-icon">🎓</div>
-            <div class="stat-content">
-              <div class="stat-value">{{ selectionStats.totalCredits }}</div>
-              <div class="stat-label">Créditos Totales</div>
-              <div class="stat-breakdown">
-                <span class="priority-credits">{{ selectionStats.priorityCredits }} prioritarios</span>
-                <span class="candidate-credits">{{ selectionStats.candidateCredits }} candidatos</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="stat-card distribution">
-            <div class="stat-icon">📅</div>
-            <div class="stat-content">
-              <div class="stat-value">{{ Object.values(selectionStats.dayDistribution).reduce((a, b) => a + b, 0) }}</div>
-              <div class="stat-label">Clases por Semana</div>
-              <div class="day-distribution">
-                <span v-for="(count, day) in selectionStats.dayDistribution" :key="day" 
-                      class="day-count" :class="{ active: count > 0 }">
-                  {{ day.charAt(0).toUpperCase() }}: {{ count }}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div class="stat-card sections">
-            <div class="stat-icon">📊</div>
-            <div class="stat-content">
-              <div class="stat-value">{{ selectionStats.openSections + selectionStats.closedSections }}</div>
-              <div class="stat-label">Secciones</div>
-              <div class="section-breakdown">
-                <span class="open-sections">{{ selectionStats.openSections }} abiertas</span>
-                <span class="closed-sections">{{ selectionStats.closedSections }} cerradas</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="stat-card conflicts" :class="{ 'has-conflicts': hasConflicts }">
-            <div class="stat-icon">⚠️</div>
-            <div class="stat-content">
-              <div class="stat-value">{{ selectionStats.conflicts.length }}</div>
-              <div class="stat-label">Conflictos</div>
-              <div class="conflict-types">
-                <span v-if="!hasConflicts" class="no-conflicts">Sin conflictos</span>
-                <span v-else class="has-conflicts-text">Requiere atención</span>
-              </div>
-            </div>
-          </div>
+        <div class="header-subtitle">
+          <p v-if="selectedItems.length === 0" class="subtitle-text empty">
+            Selecciona materias o secciones para crear tu horario personalizado
+          </p>
+          <p v-else class="subtitle-text">
+            <span class="priority-count" v-if="priorityItems.length > 0">
+              {{ priorityItems.length }} prioritario{{ priorityItems.length > 1 ? 's' : '' }}
+            </span>
+            <span class="separator" v-if="priorityItems.length > 0 && candidateItems.length > 0"> • </span>
+            <span class="candidate-count" v-if="candidateItems.length > 0">
+              {{ candidateItems.length }} candidato{{ candidateItems.length > 1 ? 's' : '' }}
+            </span>
+          </p>
         </div>
       </div>
 
@@ -435,21 +431,39 @@ export default {
           <p class="text-muted">Haz clic en las materias o expande para seleccionar secciones específicas</p>
         </div>
 
-        <!-- Bulk Actions -->
-        <div v-if="selectedItems.length > 0" class="bulk-actions">
-          <div class="bulk-actions__title">Acciones en Lote:</div>
-          <div class="bulk-actions__buttons">
-            <button @click="selectAllPriority" class="bulk-btn priority" 
-                    :disabled="candidateItems.length === 0">
-              🔴 Todos Prioritarios
-            </button>
-            <button @click="selectAllCandidate" class="bulk-btn candidate"
-                    :disabled="priorityItems.length === 0">
-              🟡 Todos Candidatos
-            </button>
-            <button @click="clearAllSelections" class="bulk-btn danger">
-              🗑️ Limpiar Todo
-            </button>
+        <!-- Management Actions -->
+        <div v-if="selectedItems.length > 0" class="management-section">
+          <div class="management-header">
+            <h3 class="management-title">⚙️ Gestión de Selecciones</h3>
+          </div>
+          
+          <div class="management-actions">
+            <div class="action-group">
+              <div class="action-label">Cambiar tipo:</div>
+              <div class="action-buttons">
+                <button @click="selectAllPriority" 
+                        class="management-btn priority" 
+                        :disabled="candidateItems.length === 0"
+                        title="Marcar todos como prioritarios">
+                  <div class="btn-icon">🔴</div>
+                  <div class="btn-content">
+                    <span class="btn-title">Todos Prioritarios</span>
+                    <span class="btn-subtitle">Obligatorios en horarios</span>
+                  </div>
+                </button>
+                
+                <button @click="selectAllCandidate" 
+                        class="management-btn candidate"
+                        :disabled="priorityItems.length === 0"
+                        title="Marcar todos como candidatos">
+                  <div class="btn-icon">🟡</div>
+                  <div class="btn-content">
+                    <span class="btn-title">Todos Candidatos</span>
+                    <span class="btn-subtitle">Opcionales si no hay conflictos</span>
+                  </div>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -488,6 +502,7 @@ export default {
                 <div class="item-details">
                   <span class="credits">🎓 {{ item.item.creditHourLow || 0 }} créditos</span>
                   <span class="sections-info">📊 {{ formatSubjectSections(item.item) }}</span>
+                  <span class="professor-info">👨‍🏫 {{ formatSubjectProfessors(item.item) }}</span>
                 </div>
               </div>
             </div>
@@ -564,6 +579,7 @@ export default {
                 <div class="item-details">
                   <span class="credits">🎓 {{ item.item.creditHourLow || 0 }} créditos</span>
                   <span class="sections-info">📊 {{ formatSubjectSections(item.item) }}</span>
+                  <span class="professor-info">👨‍🏫 {{ formatSubjectProfessors(item.item) }}</span>
                 </div>
               </div>
             </div>

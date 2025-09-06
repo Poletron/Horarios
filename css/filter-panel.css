@@ -9,21 +9,21 @@
   --filter-panel-border: #e9ecef;
   --filter-panel-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   --filter-panel-radius: 12px;
-  
+
   --filter-active-color: #007bff;
   --filter-active-bg: #e3f2fd;
   --filter-active-border: #bbdefb;
-  
+
   --filter-count-bg: #dc3545;
   --filter-count-color: #ffffff;
-  
+
   --day-button-size: 40px;
   --day-button-active-bg: #007bff;
   --day-button-active-color: #ffffff;
-  
+
   --preset-item-bg: #f8f9fa;
   --preset-item-border: #dee2e6;
-  
+
   --stats-bar-bg: #e9ecef;
   --stats-fill-bg: #28a745;
 }
@@ -50,7 +50,7 @@
   padding: var(--spacing-md) var(--spacing-lg);
   cursor: pointer;
   display: flex;
-  justify-content: between;
+  justify-content: space-between;
   align-items: center;
   transition: background-color var(--transition-fast);
 }
@@ -139,6 +139,7 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -483,61 +484,61 @@
   .filter-panel__header {
     padding: var(--spacing-sm) var(--spacing-md);
   }
-  
+
   .filter-panel__content {
     padding: var(--spacing-md);
   }
-  
+
   .filter-panel__title {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-xs);
   }
-  
+
   .availability-options {
     flex-direction: column;
   }
-  
+
   .availability-option {
     justify-content: center;
   }
-  
+
   .day-selector {
     justify-content: center;
   }
-  
+
   .filter-panel__actions {
     flex-direction: column;
     gap: var(--spacing-md);
   }
-  
+
   .action-buttons {
     justify-content: center;
     flex-wrap: wrap;
   }
-  
+
   .filter-stats {
     align-items: center;
     text-align: center;
   }
-  
+
   .stats-bar {
     width: 100%;
     max-width: 200px;
   }
-  
+
   .presets-header {
     flex-direction: column;
     gap: var(--spacing-sm);
     align-items: stretch;
   }
-  
+
   .preset-item {
     flex-direction: column;
     gap: var(--spacing-sm);
     align-items: stretch;
   }
-  
+
   .preset-actions {
     justify-content: center;
   }
@@ -545,9 +546,12 @@
 
 /* Animaciones adicionales */
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.7;
   }
@@ -597,13 +601,15 @@
 
 /* Transiciones suaves para todos los elementos */
 .filter-panel * {
-  transition: color var(--transition-fast), 
-              background-color var(--transition-fast), 
-              border-color var(--transition-fast), 
-              transform var(--transition-fast), 
-              box-shadow var(--transition-fast),
-              opacity var(--transition-fast);
-}/* M
+  transition: color var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast),
+    box-shadow var(--transition-fast),
+    opacity var(--transition-fast);
+}
+
+/* M
 ejoras de alineación y responsive */
 .filter-section .row {
   align-items: end;
@@ -619,12 +625,14 @@ ejoras de alineación y responsive */
 }
 
 .filter-section .input-group {
-  min-width: 0; /* Permite que los elementos se encojan */
+  min-width: 0;
+  /* Permite que los elementos se encojan */
 }
 
 .filter-section .form-select,
 .filter-section .form-control {
-  min-width: 0; /* Permite que los elementos se encojan */
+  min-width: 0;
+  /* Permite que los elementos se encojan */
   font-size: 0.9rem;
 }
 
@@ -633,18 +641,18 @@ ejoras de alineación y responsive */
   .filter-section .row {
     gap: var(--spacing-md);
   }
-  
+
   .filter-section .form-label {
     font-size: 0.85rem;
     margin-bottom: var(--spacing-xs);
   }
-  
+
   .filter-section .form-select,
   .filter-section .form-control {
     font-size: 0.85rem;
     padding: var(--spacing-xs) var(--spacing-sm);
   }
-  
+
   .filter-section .btn {
     padding: var(--spacing-xs);
     font-size: 0.8rem;
@@ -652,12 +660,13 @@ ejoras de alineación y responsive */
 }
 
 @media (max-width: 576px) {
+
   .filter-section .col-md-4,
   .filter-section .col-lg-3,
   .filter-section .col-lg-6 {
     margin-bottom: var(--spacing-md);
   }
-  
+
   .filter-section .form-label {
     font-size: 0.8rem;
   }
