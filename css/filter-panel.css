@@ -603,4 +603,62 @@
               transform var(--transition-fast), 
               box-shadow var(--transition-fast),
               opacity var(--transition-fast);
+}/* M
+ejoras de alineación y responsive */
+.filter-section .row {
+  align-items: end;
+}
+
+.filter-section .form-label {
+  font-size: 0.9rem;
+  margin-bottom: var(--spacing-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.filter-section .input-group {
+  min-width: 0; /* Permite que los elementos se encojan */
+}
+
+.filter-section .form-select,
+.filter-section .form-control {
+  min-width: 0; /* Permite que los elementos se encojan */
+  font-size: 0.9rem;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .filter-section .row {
+    gap: var(--spacing-md);
+  }
+  
+  .filter-section .form-label {
+    font-size: 0.85rem;
+    margin-bottom: var(--spacing-xs);
+  }
+  
+  .filter-section .form-select,
+  .filter-section .form-control {
+    font-size: 0.85rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  .filter-section .btn {
+    padding: var(--spacing-xs);
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .filter-section .col-md-4,
+  .filter-section .col-lg-3,
+  .filter-section .col-lg-6 {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .filter-section .form-label {
+    font-size: 0.8rem;
+  }
 }

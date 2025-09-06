@@ -488,7 +488,7 @@ export default {
           <div class="row g-3">
             
             <!-- Búsqueda por texto -->
-            <div class="col-md-6">
+            <div class="col-md-4 col-lg-6">
               <label class="form-label fw-semibold">
                 🔍 Búsqueda general:
               </label>
@@ -512,9 +512,9 @@ export default {
             </div>
             
             <!-- Filtro por departamento -->
-            <div class="col-md-3">
-              <label class="form-label fw-semibold">
-                🏛️ Departamento:
+            <div class="col-md-4 col-lg-3">
+              <label class="form-label fw-semibold text-truncate">
+                🏛️ Depto:
               </label>
               <div class="input-group">
                 <select v-model="filters.subject" class="form-select filter-select">
@@ -536,7 +536,7 @@ export default {
             </div>
             
             <!-- Filtro por campus -->
-            <div class="col-md-3">
+            <div class="col-md-4 col-lg-3">
               <label class="form-label fw-semibold">
                 🏢 Sede:
               </label>
@@ -612,8 +612,8 @@ export default {
           </div>
         </div>
         
-        <!-- Filtros de horario -->
-        <div class="filter-section">
+        <!-- Filtros de horario (Oculto temporalmente) -->
+        <div v-if="false" class="filter-section">
           <div class="schedule-filter-header" @click="toggleScheduleFilters">
             <h4 class="schedule-filter-title">
               ⏰ Filtros de Horario

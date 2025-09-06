@@ -205,6 +205,31 @@ export default {
     },
 
     /**
+     * Format section professor for display
+     */
+    formatSectionProfessor(section) {
+      if (!section.meetingsFaculty || section.meetingsFaculty.length === 0) {
+        return 'Sin profesor asignado';
+      }
+      
+      const professors = section.meetingsFaculty
+        .map(meeting => {
+          if (meeting.faculty && meeting.faculty.displayName) {
+            return meeting.faculty.displayName;
+          }
+          return null;
+        })
+        .filter(prof => prof)
+        .filter((prof, index, arr) => arr.indexOf(prof) === index); // Remove duplicates
+      
+      if (professors.length === 0) {
+        return 'Sin profesor asignado';
+      }
+      
+      return professors.join(', ');
+    },
+
+    /**
      * Check if a section is selected
      */
     isSectionSelected(sectionId) {
@@ -393,6 +418,10 @@ export default {
               <div class="section-card__schedule">
                 <span class="section-card__schedule-icon">⏰</span>
                 <span class="section-card__schedule-text">{{ formatSectionSchedule(section) }}</span>
+              </div>
+              <div class="section-card__professor">
+                <span class="section-card__professor-icon">👨‍🏫</span>
+                <span class="section-card__professor-text">{{ formatSectionProfessor(section) }}</span>
               </div>
               <div class="section-card__campus">
                 <span class="section-card__campus-icon">🏢</span>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Improved UI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+    <link href="css/subject-card.css" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">🧪 Test - Improved UI Components</h1>
+                
+                <div id="app">
+                    <!-- Test Selection Mode Controls -->
+                    <div class="selection-mode-controls mb-4">
+                        <div class="mode-controls-header">
+                            <h3>⚙️ Configuración de Selección</h3>
+                            <p>Configura cómo quieres seleccionar elementos</p>
+                        </div>
+                        
+                        <div class="mode-controls-grid">
+                            <div class="control-section">
+                                <label class="control-section-label">
+                                    <i class="fas fa-mouse-pointer"></i>
+                                    Seleccionando:
+                                </label>
+                                <div class="control-buttons">
+                                    <button 
+                                        @click="selectionType = 'subject'" 
+                                        :class="['mode-btn', 'type-btn', selectionType === 'subject' ? 'active' : '']"
+                                    >
+                                        <i class="fas fa-book"></i>
+                                        <div>
+                                            <span>Materias Completas</span>
+                                            <small>Todas las secciones de la materia</small>
+                                        </div>
+                                    </button>
+                                    <button 
+                                        @click="selectionType = 'section'" 
+                                        :class="['mode-btn', 'type-btn', selectionType === 'section' ? 'active' : '']"
+                                    >
+                                        <i class="fas fa-list-ul"></i>
+                                        <div>
+                                            <span>Secciones Específicas</span>
+                                            <small>Solo secciones individuales</small>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="control-section">
+                                <label class="control-section-label">
+                                    <i class="fas fa-flag"></i>
+                                    Como:
+                                </label>
+                                <div class="control-buttons">
+                                    <button 
+                                        @click="selectionMode = 'priority'" 
+                                        :class="['mode-btn', 'priority-btn', selectionMode === 'priority' ? 'active' : '']"
+                                    >
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        <div>
+                                            <span>Prioritaria</span>
+                                            <small>Debe estar en todos los horarios</small>
+                                        </div>
+                                    </button>
+                                    <button 
+                                        @click="selectionMode = 'candidate'" 
+                                        :class="['mode-btn', 'candidate-btn', selectionMode === 'candidate' ? 'active' : '']"
+                                    >
+                                        <i class="fas fa-star"></i>
+                                        <div>
+                                            <span>Candidata</span>
+                                            <small>Opcional si no hay conflictos</small>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Test Generation Section -->
+                    <div class="generation-section">
+                        <div class="generation-header">
+                            <h3>🚀 Generar Horarios</h3>
+                            <p>Configura las opciones y genera tus horarios personalizados</p>
+                        </div>
+                        
+                        <div class="generation-content">
+                            <div class="generation-options-grid">
+                                <div class="option-card">
+                                    <div class="option-header">
+                                        <i class="fas fa-filter"></i>
+                                        <span>Filtros de Secciones</span>
+                                    </div>
+                                    <div class="option-content">
+                                        <label class="custom-checkbox">
+                                            <input type="checkbox" v-model="onlyOpenSections">
+                                            <span class="checkmark"></span>
+                                            <span class="checkbox-label">
+                                                <strong>Solo secciones abiertas</strong>
+                                                <small>Excluir secciones cerradas del horario</small>
+                                            </span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="option-card">
+                                    <div class="option-header">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span>Sede Preferida</span>
+                                    </div>
+                                    <div class="option-content">
+                                        <div class="campus-selector-enhanced">
+                                            <select v-model="selectedCampus" class="campus-select">
+                                                <option value="">🏫 Todas las sedes</option>
+                                                <option value="Caracas">🏢 Caracas</option>
+                                                <option value="Guayana">🏢 Guayana</option>
+                                                <option value="Valencia">🏢 Valencia</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Generation Summary -->
+                            <div class="generation-summary">
+                                <div class="summary-stats">
+                                    <div class="summary-item">
+                                        <span class="summary-value">5</span>
+                                        <span class="summary-label">elementos</span>
+                                    </div>
+                                    <div class="summary-item">
+                                        <span class="summary-value">15</span>
+                                        <span class="summary-label">créditos</span>
+                                    </div>
+                                    <div class="summary-item" :class="{ 'has-conflicts': hasConflicts }">
+                                        <span class="summary-value">{{ hasConflicts ? 2 : 0 }}</span>
+                                        <span class="summary-label">conflictos</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="generation-actions">
+                                    <button @click="toggleGenerating" 
+                                            class="generate-btn-enhanced" 
+                                            :class="{ 
+                                                'generating': generating, 
+                                                'has-conflicts': hasConflicts,
+                                                'ready': !hasConflicts && !generating
+                                            }">
+                                        <div class="btn-content">
+                                            <div class="btn-icon">
+                                                <i v-if="generating" class="fas fa-spinner fa-spin"></i>
+                                                <i v-else-if="hasConflicts" class="fas fa-exclamation-triangle"></i>
+                                                <i v-else class="fas fa-rocket"></i>
+                                            </div>
+                                            <div class="btn-text">
+                                                <span class="btn-title">
+                                                    {{ generating ? 'Generando...' : 'Generar Horarios' }}
+                                                </span>
+                                                <span class="btn-subtitle">
+                                                    {{ generating ? 'Por favor espera' : 
+                                                       hasConflicts ? 'Con conflictos detectados' : 
+                                                       'Crear horarios optimizados' }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div v-if="generating" class="progress-bar">
+                                            <div class="progress-fill"></div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Test Controls -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="m-0">🔧 Test Controls</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <h6>Selection Type:</h6>
+                                    <p class="text-muted">{{ selectionType === 'subject' ? 'Materias Completas' : 'Secciones Específicas' }}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6>Selection Mode:</h6>
+                                    <p class="text-muted">{{ selectionMode === 'priority' ? 'Prioritaria' : 'Candidata' }}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <h6>Options:</h6>
+                                    <p class="text-muted">
+                                        Open Sections: {{ onlyOpenSections ? 'Yes' : 'No' }}<br>
+                                        Campus: {{ selectedCampus || 'All' }}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button @click="hasConflicts = !hasConflicts" class="btn btn-sm btn-warning me-2">
+                                    {{ hasConflicts ? 'Remove' : 'Add' }} Conflicts
+                                </button>
+                                <button @click="generating = !generating" class="btn btn-sm btn-info">
+                                    {{ generating ? 'Stop' : 'Start' }} Generating
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    selectionType: 'subject',
+                    selectionMode: 'priority',
+                    onlyOpenSections: true,
+                    selectedCampus: '',
+                    hasConflicts: false,
+                    generating: false
+                };
+            },
+            
+            methods: {
+                toggleGenerating() {
+                    this.generating = !this.generating;
+                    if (this.generating) {
+                        setTimeout(() => {
+                            this.generating = false;
+                        }, 3000);
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

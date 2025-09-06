@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Filter Improvements</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+    <link href="css/filter-panel.css" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">🧪 Test - Filter Panel Improvements</h1>
+                
+                <div id="app">
+                    <!-- Test Filter Panel -->
+                    <div class="filter-panel">
+                        <div class="filter-panel__header" @click="isExpanded = !isExpanded">
+                            <div class="filter-panel__title">
+                                <h3>
+                                    🔍 Filtros Avanzados
+                                    <span v-if="activeFiltersCount > 0" class="filter-count-badge">{{ activeFiltersCount }}</span>
+                                </h3>
+                                <div class="filter-panel__stats">
+                                    <span class="result-count">{{ filteredCount }} de {{ totalCount }} materias</span>
+                                </div>
+                            </div>
+                            <button class="filter-panel__toggle" :class="{ 'expanded': isExpanded }">
+                                {{ isExpanded ? '▼' : '▶' }}
+                            </button>
+                        </div>
+                        
+                        <div v-show="isExpanded" class="filter-panel__content">
+                            <!-- Filtros básicos -->
+                            <div class="filter-section">
+                                <div class="row g-3">
+                                    
+                                    <!-- Búsqueda por texto -->
+                                    <div class="col-md-4 col-lg-6">
+                                        <label class="form-label fw-semibold">
+                                            🔍 Búsqueda general:
+                                        </label>
+                                        <div class="input-group">
+                                            <input 
+                                                v-model="filters.text"
+                                                type="text" 
+                                                class="form-control filter-input" 
+                                                placeholder="Buscar por código, nombre o título..."
+                                            >
+                                            <button 
+                                                v-if="filters.text"
+                                                @click="clearFilter('text')"
+                                                class="btn btn-outline-secondary"
+                                                type="button"
+                                                title="Limpiar búsqueda"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Filtro por departamento -->
+                                    <div class="col-md-4 col-lg-3">
+                                        <label class="form-label fw-semibold text-truncate">
+                                            🏛️ Depto:
+                                        </label>
+                                        <div class="input-group">
+                                            <select v-model="filters.subject" class="form-select filter-select">
+                                                <option value="">Todos</option>
+                                                <option value="MAT">MAT</option>
+                                                <option value="FIS">FIS</option>
+                                                <option value="QUI">QUI</option>
+                                                <option value="BIO">BIO</option>
+                                                <option value="INFO">INFO</option>
+                                            </select>
+                                            <button 
+                                                v-if="filters.subject"
+                                                @click="clearFilter('subject')"
+                                                class="btn btn-outline-secondary"
+                                                type="button"
+                                                title="Limpiar departamento"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Filtro por campus -->
+                                    <div class="col-md-4 col-lg-3">
+                                        <label class="form-label fw-semibold">
+                                            🏢 Sede:
+                                        </label>
+                                        <div class="input-group">
+                                            <select v-model="filters.campus" class="form-select filter-select">
+                                                <option value="">Todas</option>
+                                                <option value="Caracas">Caracas</option>
+                                                <option value="Guayana">Guayana</option>
+                                                <option value="Valencia">Valencia</option>
+                                            </select>
+                                            <button 
+                                                v-if="filters.campus"
+                                                @click="clearFilter('campus')"
+                                                class="btn btn-outline-secondary"
+                                                type="button"
+                                                title="Limpiar sede"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                            
+                            <!-- Filtros avanzados -->
+                            <div class="filter-section">
+                                <div class="row g-3">
+                                    
+                                    <!-- Filtro por profesor -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">
+                                            👨‍🏫 Profesor:
+                                        </label>
+                                        <div class="input-group">
+                                            <input 
+                                                v-model="filters.professor"
+                                                type="text" 
+                                                class="form-control filter-input" 
+                                                placeholder="Buscar por nombre del profesor..."
+                                            >
+                                            <button 
+                                                v-if="filters.professor"
+                                                @click="clearFilter('professor')"
+                                                class="btn btn-outline-secondary"
+                                                type="button"
+                                                title="Limpiar profesor"
+                                            >
+                                                ✕
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Filtro por disponibilidad -->
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">
+                                            📊 Disponibilidad:
+                                        </label>
+                                        <div class="availability-options">
+                                            <div 
+                                                v-for="option in availabilityOptions" 
+                                                :key="option.value"
+                                                @click="filters.availability = option.value"
+                                                :class="['availability-option', { 'active': filters.availability === option.value }]"
+                                            >
+                                                <span class="availability-icon">{{ option.icon }}</span>
+                                                <span class="availability-text">{{ option.label }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                            
+                            <!-- Acciones del panel -->
+                            <div class="filter-actions">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <button @click="clearAllFilters" class="btn btn-outline-warning">
+                                        🗑️ Limpiar todo
+                                    </button>
+                                    <div class="filter-results">
+                                        Mostrando {{ filteredCount }} de {{ totalCount }} materias
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Test Controls -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="m-0">🔧 Test Controls</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Current Filters:</h6>
+                                    <pre class="bg-light p-2 rounded small">{{ JSON.stringify(filters, null, 2) }}</pre>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Stats:</h6>
+                                    <p>
+                                        Active Filters: {{ activeFiltersCount }}<br>
+                                        Filtered Results: {{ filteredCount }}/{{ totalCount }}<br>
+                                        Panel Expanded: {{ isExpanded ? 'Yes' : 'No' }}
+                                    </p>
+                                    <button @click="addRandomFilters" class="btn btn-sm btn-primary me-2">
+                                        Add Random Filters
+                                    </button>
+                                    <button @click="clearAllFilters" class="btn btn-sm btn-warning">
+                                        Clear All
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    isExpanded: true,
+                    totalCount: 75,
+                    filteredCount: 75,
+                    filters: {
+                        text: '',
+                        subject: '',
+                        campus: '',
+                        professor: '',
+                        availability: 'all'
+                    },
+                    availabilityOptions: [
+                        { value: 'all', label: 'Todas las secciones', icon: '📋' },
+                        { value: 'open', label: 'Solo secciones abiertas', icon: '✅' },
+                        { value: 'closed', label: 'Solo secciones cerradas', icon: '❌' }
+                    ]
+                };
+            },
+            
+            computed: {
+                activeFiltersCount() {
+                    let count = 0;
+                    if (this.filters.text) count++;
+                    if (this.filters.subject) count++;
+                    if (this.filters.campus) count++;
+                    if (this.filters.professor) count++;
+                    if (this.filters.availability !== 'all') count++;
+                    return count;
+                }
+            },
+            
+            methods: {
+                clearFilter(filterName) {
+                    if (filterName === 'availability') {
+                        this.filters[filterName] = 'all';
+                    } else {
+                        this.filters[filterName] = '';
+                    }
+                    this.updateFilteredCount();
+                },
+                
+                clearAllFilters() {
+                    this.filters = {
+                        text: '',
+                        subject: '',
+                        campus: '',
+                        professor: '',
+                        availability: 'all'
+                    };
+                    this.filteredCount = this.totalCount;
+                },
+                
+                addRandomFilters() {
+                    const subjects = ['MAT', 'FIS', 'QUI', 'BIO', 'INFO'];
+                    const campuses = ['Caracas', 'Guayana', 'Valencia'];
+                    const professors = ['Dr. García', 'Prof. Rodríguez', 'Ing. Martínez'];
+                    
+                    this.filters.text = Math.random() > 0.5 ? 'Cálculo' : '';
+                    this.filters.subject = Math.random() > 0.5 ? subjects[Math.floor(Math.random() * subjects.length)] : '';
+                    this.filters.campus = Math.random() > 0.5 ? campuses[Math.floor(Math.random() * campuses.length)] : '';
+                    this.filters.professor = Math.random() > 0.5 ? professors[Math.floor(Math.random() * professors.length)] : '';
+                    this.filters.availability = Math.random() > 0.7 ? 'open' : 'all';
+                    
+                    this.updateFilteredCount();
+                },
+                
+                updateFilteredCount() {
+                    // Simulate filtering
+                    let count = this.totalCount;
+                    if (this.filters.text) count -= Math.floor(Math.random() * 20);
+                    if (this.filters.subject) count -= Math.floor(Math.random() * 15);
+                    if (this.filters.campus) count -= Math.floor(Math.random() * 10);
+                    if (this.filters.professor) count -= Math.floor(Math.random() * 25);
+                    if (this.filters.availability !== 'all') count -= Math.floor(Math.random() * 5);
+                    
+                    this.filteredCount = Math.max(count, 5);
+                }
+            },
+            
+            watch: {
+                filters: {
+                    handler() {
+                        this.updateFilteredCount();
+                    },
+                    deep: true
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

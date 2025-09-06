@@ -2,12 +2,14 @@ import CourseService from '../services/CourseService.js';
 import ScheduleGeneratorService from '../services/ScheduleGeneratorService.js';
 import SubjectCard from './SubjectCard.js';
 import FilterPanel from './FilterPanel.js';
+import SelectionPanel from './SelectionPanel.js';
 import AnimationService from '../services/AnimationService.js';
 
 export default {
   components: {
     SubjectCard,
-    FilterPanel
+    FilterPanel,
+    SelectionPanel
   },
   
   data() {
@@ -316,6 +318,28 @@ export default {
       
       return schedules || 'Sin horario definido';
     },
+
+    formatSectionProfessor(section) {
+      if (!section.meetingsFaculty || section.meetingsFaculty.length === 0) {
+        return 'Sin profesor asignado';
+      }
+      
+      const professors = section.meetingsFaculty
+        .map(meeting => {
+          if (meeting.faculty && meeting.faculty.displayName) {
+            return meeting.faculty.displayName;
+          }
+          return null;
+        })
+        .filter(prof => prof)
+        .filter((prof, index, arr) => arr.indexOf(prof) === index); // Remove duplicates
+      
+      if (professors.length === 0) {
+        return 'Sin profesor asignado';
+      }
+      
+      return professors.join(', ');
+    },
     
     async generateSchedules() {
       this.generatingSchedules = true;
@@ -424,6 +448,41 @@ export default {
       
       return result;
     },
+
+    // SelectionPanel event handlers
+    onToggleSelectionType(item) {
+      const index = this.selectedItems.indexOf(item);
+      this.toggleSelectionType(index);
+    },
+
+    onRemoveItem(item) {
+      if (item.type === 'subject') {
+        this.toggleSubjectSelection(item.item);
+      } else if (item.type === 'section') {
+        this.toggleSectionSelection(item.item, item.subjectInfo);
+      }
+    },
+
+    onBulkChangeType(items, newType) {
+      items.forEach(item => {
+        if (item.selectionType !== newType) {
+          const index = this.selectedItems.indexOf(item);
+          this.toggleSelectionType(index);
+        }
+      });
+    },
+
+    onClearAll() {
+      // Create a copy to avoid modifying array while iterating
+      const itemsToRemove = [...this.selectedItems];
+      itemsToRemove.forEach(item => {
+        this.onRemoveItem(item);
+      });
+    },
+
+    onGenerateSchedules() {
+      this.generateSchedules();
+    },
     
     formatSubjectSections(subject) {
       const totalSections = subject.sections.length;
@@ -461,320 +520,143 @@ export default {
       </div>
       
       <div v-else>
-        <div class="card mb-4">
-          <div class="hybrid-selector-header card-header d-flex justify-content-between align-items-center">
-            <h2 class="m-0">Selección Híbrida de Materias y Secciones</h2>
-            <div class="selection-mode-toggle">
-              <div class="btn-group btn-group-sm me-3" role="group">
-                <button 
-                  @click="selectionType = 'subject'" 
-                  :class="['mode-toggle-btn', selectionType === 'subject' ? 'active' : '']"
-                >
-                  📚 Materias Completas
-                </button>
-                <button 
-                  @click="selectionType = 'section'" 
-                  :class="['mode-toggle-btn', selectionType === 'section' ? 'active' : '']"
-                >
-                  📋 Secciones Específicas
-                </button>
-              </div>
-              <div class="btn-group btn-group-sm" role="group">
-                <button 
-                  @click="selectionMode = 'priority'" 
-                  :class="['mode-toggle-btn', selectionMode === 'priority' ? 'active' : '']"
-                >
-                  🔴 Prioritaria
-                </button>
-                <button 
-                  @click="selectionMode = 'candidate'" 
-                  :class="['mode-toggle-btn', selectionMode === 'candidate' ? 'active' : '']"
-                >
-                  🟡 Candidata
-                </button>
-              </div>
-              <span class="badge bg-light text-dark ms-2">{{ filteredSubjects.length }} materias</span>
+        <div class="selector-card">
+          <div class="selector-header">
+            <div class="selector-title">
+              <h2>🎯 Selección de Materias y Secciones</h2>
+              <p class="selector-subtitle">Elige materias completas o secciones específicas según tus necesidades</p>
+            </div>
+            
+            <div class="results-counter">
+              <span class="counter-value">{{ filteredSubjects.length }}</span>
+              <span class="counter-label">materias disponibles</span>
             </div>
           </div>
           
-          <div class="card-body">
+          <div class="selector-content">
             <!-- FilterPanel Component -->
-            <FilterPanel
-              :subjects="subjects"
-              :courses="courses"
-              :campuses="campuses"
-              :subject-codes="subjectCodes"
-              @filters-applied="onFiltersApplied"
-              @preset-saved="onPresetSaved"
-              @preset-loaded="onPresetLoaded"
-              @preset-deleted="onPresetDeleted"
-            />
+            <div class="filter-section">
+              <FilterPanel
+                :subjects="subjects"
+                :courses="courses"
+                :campuses="campuses"
+                :subject-codes="subjectCodes"
+                @filters-applied="onFiltersApplied"
+                @preset-saved="onPresetSaved"
+                @preset-loaded="onPresetLoaded"
+                @preset-deleted="onPresetDeleted"
+              />
+            </div>
             
-            <!-- Selection mode and type indicators -->
-            <div class="selection-mode-info p-3 mb-3 bg-light rounded">
-              <div class="d-flex align-items-center gap-3 justify-content-center">
-                <div class="d-flex align-items-center">
-                  <span class="me-2 fw-semibold">Tipo:</span>
-                  <span class="selection-badge" :class="selectionType === 'subject' ? 'bg-success text-white' : 'bg-info text-white'">
-                    {{ selectionType === 'subject' ? '📚 Materias' : '📋 Secciones' }}
-                  </span>
+            <!-- Interactive Selection Mode Controls -->
+            <div class="selection-mode-controls">
+              <div class="mode-controls-header">
+                <h3>⚙️ Configuración de Selección</h3>
+                <p>Configura cómo quieres seleccionar elementos</p>
+              </div>
+              
+              <div class="mode-controls-grid">
+                <div class="control-section">
+                  <label class="control-section-label">
+                    <i class="fas fa-mouse-pointer"></i>
+                    Seleccionando:
+                  </label>
+                  <div class="control-buttons">
+                    <button 
+                      @click="selectionType = 'subject'" 
+                      :class="['mode-btn', 'type-btn', selectionType === 'subject' ? 'active' : '']"
+                    >
+                      <i class="fas fa-book"></i>
+                      <span>Materias Completas</span>
+                      <small>Todas las secciones de la materia</small>
+                    </button>
+                    <button 
+                      @click="selectionType = 'section'" 
+                      :class="['mode-btn', 'type-btn', selectionType === 'section' ? 'active' : '']"
+                    >
+                      <i class="fas fa-list-ul"></i>
+                      <span>Secciones Específicas</span>
+                      <small>Solo secciones individuales</small>
+                    </button>
+                  </div>
                 </div>
-                <div class="d-flex align-items-center">
-                  <span class="me-2 fw-semibold">Modo:</span>
-                  <span class="selection-badge" :class="selectionMode === 'priority' ? 'priority' : 'candidate'">
-                    {{ selectionMode === 'priority' ? '🔴 Prioritaria' : '🟡 Candidata' }}
-                  </span>
+                
+                <div class="control-section">
+                  <label class="control-section-label">
+                    <i class="fas fa-flag"></i>
+                    Como:
+                  </label>
+                  <div class="control-buttons">
+                    <button 
+                      @click="selectionMode = 'priority'" 
+                      :class="['mode-btn', 'priority-btn', selectionMode === 'priority' ? 'active' : '']"
+                    >
+                      <i class="fas fa-exclamation-circle"></i>
+                      <span>Prioritaria</span>
+                      <small>Debe estar en todos los horarios</small>
+                    </button>
+                    <button 
+                      @click="selectionMode = 'candidate'" 
+                      :class="['mode-btn', 'candidate-btn', selectionMode === 'candidate' ? 'active' : '']"
+                    >
+                      <i class="fas fa-star"></i>
+                      <span>Candidata</span>
+                      <small>Opcional si no hay conflictos</small>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
             
-            <div class="subject-list-container">
-              <div v-if="filteredSubjects.length === 0" class="empty-state">
-                <div class="empty-state-icon">📚</div>
-                <h5>No se encontraron materias</h5>
-                <p class="text-muted">Intenta ajustar los filtros para encontrar las materias que buscas.</p>
+            <!-- Subject List -->
+            <div class="subjects-section">
+              <div class="section-header">
+                <h3>📚 Lista de Materias</h3>
+                <span class="section-counter">{{ filteredSubjects.length }} disponibles</span>
               </div>
               
-              <SubjectCard
-                v-for="subject in filteredSubjects" 
-                :key="subject.id"
-                :subject="subject"
-                :is-selected="isSubjectSelected(subject.id)"
-                :selection-type="getSelectionType(subject.id, 'subject')"
-                :is-expanded="isSubjectExpanded(subject.id)"
-                :selection-mode="selectionType"
-                :only-open-sections="onlyOpenSections"
-                :selected-sections="selectedItems"
-                :data-subject-id="subject.id"
-                @toggle-selection="toggleSubjectSelection"
-                @toggle-expansion="toggleSubjectExpansion"
-                @section-selection="toggleSectionSelection"
-              />
+              <div class="subject-list-container">
+                <div v-if="filteredSubjects.length === 0" class="empty-state">
+                  <div class="empty-state-icon">📚</div>
+                  <h5>No se encontraron materias</h5>
+                  <p class="text-muted">Intenta ajustar los filtros para encontrar las materias que buscas.</p>
+                </div>
+                
+                <SubjectCard
+                  v-for="subject in filteredSubjects" 
+                  :key="subject.id"
+                  :subject="subject"
+                  :is-selected="isSubjectSelected(subject.id)"
+                  :selection-type="getSelectionType(subject.id, 'subject')"
+                  :is-expanded="isSubjectExpanded(subject.id)"
+                  :selection-mode="selectionType"
+                  :only-open-sections="onlyOpenSections"
+                  :selected-sections="selectedItems"
+                  :data-subject-id="subject.id"
+                  @toggle-selection="toggleSubjectSelection"
+                  @toggle-expansion="toggleSubjectExpansion"
+                  @section-selection="toggleSectionSelection"
+                />
+              </div>
             </div>
           </div>
         </div>
         
-        <div class="selected-items-panel card">
-          <div class="selected-items-header card-header">
-            <h2 class="m-0">📋 Elementos Seleccionados</h2>
-          </div>
-          
-          <div class="card-body">
-            <div v-if="selectedItems.length === 0" class="empty-state">
-              <div class="empty-state-icon">📝</div>
-              <h5>No has seleccionado ningún elemento</h5>
-              <p class="text-muted">Haz clic en las materias o expande para seleccionar secciones específicas</p>
-            </div>
-            
-            <div v-else>
-              <!-- Sección de materias prioritarias -->
-              <div v-if="prioritySubjects.length > 0">
-                <div class="selected-section-header">
-                  <span class="section-type-badge priority">🔴 Materias Prioritarias</span>
-                  <span class="text-muted">Materias completas que deben estar en todos los horarios</span>
-                </div>
-                <div v-for="(item, index) in prioritySubjects" :key="'ps-'+item.item.id" 
-                    class="selected-item-card priority p-3 mb-3">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div class="subject-content">
-                      <div class="subject-code">{{ item.item.subject }}{{ item.item.courseNumber }}</div>
-                      <div class="subject-title small mb-1">{{ item.item.courseTitle }}</div>
-                      <div class="small text-muted">
-                        🎓 {{ item.item.creditHourLow || 0 }} créditos · 
-                        📊 {{ formatSubjectSections(item.item) }}
-                      </div>
-                    </div>
-                    
-                    <div class="d-flex gap-2">
-                      <button @click.stop="toggleSelectionType(selectedItems.indexOf(item))" 
-                          class="item-action-btn btn-outline-warning" title="Cambiar a candidata">
-                        🔄 Candidata
-                      </button>
-                      <button @click.stop="toggleSubjectSelection(item.item)" 
-                          class="item-action-btn btn-outline-danger" title="Eliminar">
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Sección de secciones prioritarias -->
-              <div v-if="prioritySections.length > 0" :class="{'mt-4': prioritySubjects.length > 0}">
-                <div class="selected-section-header">
-                  <span class="section-type-badge priority">🔴 Secciones Prioritarias</span>
-                  <span class="text-muted">Secciones específicas que deben estar en todos los horarios</span>
-                </div>
-                <div v-for="(item, index) in prioritySections" :key="'ps-'+item.item.id" 
-                    class="selected-item-card priority p-3 mb-3">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div class="subject-content">
-                      <div class="subject-code">{{ item.subjectInfo.subject }}{{ item.subjectInfo.courseNumber }}</div>
-                      <div class="subject-title small mb-1">{{ item.subjectInfo.courseTitle }}</div>
-                      <div class="section-header mb-1">
-                        <span class="section-nrc">{{ item.item.courseReferenceNumber }}</span>
-                        <span class="section-sequence">Sec. {{ item.item.sequenceNumber }}</span>
-                        <span class="section-status-badge" :class="item.item.openSection ? 'open' : 'closed'">
-                          {{ item.item.openSection ? '✅ Abierta' : '❌ Cerrada' }}
-                        </span>
-                      </div>
-                      <div class="section-schedule small">⏰ {{ formatSectionSchedule(item.item) }}</div>
-                    </div>
-                    
-                    <div class="d-flex gap-2">
-                      <button @click.stop="toggleSelectionType(selectedItems.indexOf(item))" 
-                          class="item-action-btn btn-outline-warning" title="Cambiar a candidata">
-                        🔄 Candidata
-                      </button>
-                      <button @click.stop="toggleSectionSelection(item.item, item.subjectInfo)" 
-                          class="item-action-btn btn-outline-danger" title="Eliminar">
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Sección de materias candidatas -->
-              <div v-if="candidateSubjects.length > 0" :class="{'mt-4': prioritySubjects.length > 0 || prioritySections.length > 0}">
-                <div class="selected-section-header">
-                  <span class="section-type-badge candidate">🟡 Materias Candidatas</span>
-                  <span class="text-muted">Materias completas opcionales que pueden incluirse si no generan conflictos</span>
-                </div>
-                <div v-for="(item, index) in candidateSubjects" :key="'cs-'+item.item.id"
-                    class="selected-item-card candidate p-3 mb-3">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div class="subject-content">
-                      <div class="subject-code">{{ item.item.subject }}{{ item.item.courseNumber }}</div>
-                      <div class="subject-title small mb-1">{{ item.item.courseTitle }}</div>
-                      <div class="small text-muted">
-                        🎓 {{ item.item.creditHourLow || 0 }} créditos · 
-                        📊 {{ formatSubjectSections(item.item) }}
-                      </div>
-                    </div>
-                    
-                    <div class="d-flex gap-2">
-                      <button @click.stop="toggleSelectionType(selectedItems.indexOf(item))" 
-                          class="item-action-btn btn-outline-danger" title="Cambiar a prioritaria">
-                        🔄 Prioritaria
-                      </button>
-                      <button @click.stop="toggleSubjectSelection(item.item)" 
-                          class="item-action-btn btn-outline-danger" title="Eliminar">
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Sección de secciones candidatas -->
-              <div v-if="candidateSections.length > 0" :class="{'mt-4': prioritySubjects.length > 0 || prioritySections.length > 0 || candidateSubjects.length > 0}">
-                <div class="selected-section-header">
-                  <span class="section-type-badge candidate">🟡 Secciones Candidatas</span>
-                  <span class="text-muted">Secciones específicas opcionales que pueden incluirse si no generan conflictos</span>
-                </div>
-                <div v-for="(item, index) in candidateSections" :key="'cs-'+item.item.id"
-                    class="selected-item-card candidate p-3 mb-3">
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div class="subject-content">
-                      <div class="subject-code">{{ item.subjectInfo.subject }}{{ item.subjectInfo.courseNumber }}</div>
-                      <div class="subject-title small mb-1">{{ item.subjectInfo.courseTitle }}</div>
-                      <div class="section-header mb-1">
-                        <span class="section-nrc">{{ item.item.courseReferenceNumber }}</span>
-                        <span class="section-sequence">Sec. {{ item.item.sequenceNumber }}</span>
-                        <span class="section-status-badge" :class="item.item.openSection ? 'open' : 'closed'">
-                          {{ item.item.openSection ? '✅ Abierta' : '❌ Cerrada' }}
-                        </span>
-                      </div>
-                      <div class="section-schedule small">⏰ {{ formatSectionSchedule(item.item) }}</div>
-                    </div>
-                    
-                    <div class="d-flex gap-2">
-                      <button @click.stop="toggleSelectionType(selectedItems.indexOf(item))" 
-                          class="item-action-btn btn-outline-danger" title="Cambiar a prioritaria">
-                        🔄 Prioritaria
-                      </button>
-                      <button @click.stop="toggleSectionSelection(item.item, item.subjectInfo)" 
-                          class="item-action-btn btn-outline-danger" title="Eliminar">
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="d-flex justify-content-between align-items-center mt-4 p-3 border-top bg-light rounded">
-                <div class="d-flex align-items-center gap-3">
-                  <div class="text-center">
-                    <div class="fw-bold text-primary fs-4">{{ selectedItems.length }}</div>
-                    <div class="small text-muted">Total</div>
-                  </div>
-                  <div class="text-center">
-                    <div class="fw-bold text-danger fs-5">{{ priorityItems.length }}</div>
-                    <div class="small text-muted">🔴 Prioritarios</div>
-                  </div>
-                  <div class="text-center">
-                    <div class="fw-bold text-warning fs-5">{{ candidateItems.length }}</div>
-                    <div class="small text-muted">🟡 Candidatos</div>
-                  </div>
-                </div>
-                <div class="text-end">
-                  <div class="small text-muted">Elementos seleccionados</div>
-                  <div class="fw-semibold">📊 Resumen de selección</div>
-                </div>
-              </div>
-              
-              <div class="d-flex justify-content-between mt-2 p-2 border-top">
-                <div>
-                  <strong>Desglose:</strong>
-                </div>
-                <div class="text-muted small">
-                  <span class="me-3">{{ prioritySubjects.length }} materias prioritarias</span>
-                  <span class="me-3">{{ prioritySections.length }} secciones prioritarias</span>
-                  <span class="me-3">{{ candidateSubjects.length }} materias candidatas</span>
-                  <span>{{ candidateSections.length }} secciones candidatas</span>
-                </div>
-              </div>
-              
-              <div class="mt-3">
-                <div class="form-check mb-2">
-                  <input class="form-check-input" type="checkbox" v-model="onlyOpenSections" id="onlyOpenSections">
-                  <label class="form-check-label" for="onlyOpenSections">
-                    Considerar solo secciones abiertas
-                  </label>
-                </div>
-                
-                <div class="mb-3">
-                  <label class="form-label">Generar horarios para sede:</label>
-                  <select v-model="selectedCampus" class="form-select">
-                    <option value="">Todas las sedes</option>
-                    <option v-for="campus in campuses" :key="campus" :value="campus">
-                      {{ campus }}
-                    </option>
-                  </select>
-                </div>
-                
-                <button 
-                  @click="generateSchedules" 
-                  class="btn btn-primary w-100"
-                  :disabled="selectedItems.length === 0 || generatingSchedules"
-                  data-action="generate"
-                >
-                  <span v-if="generatingSchedules" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                  <span v-if="!generatingSchedules">🚀 Generar horarios posibles</span>
-                  <span v-else>
-                    Generando
-                    <span class="loading-dots">
-                      <span class="loading-dot"></span>
-                      <span class="loading-dot"></span>
-                      <span class="loading-dot"></span>
-                    </span>
-                  </span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- Enhanced Selection Panel Component -->
+        <SelectionPanel
+          :selected-items="selectedItems"
+          :only-open-sections.sync="onlyOpenSections"
+          :selected-campus.sync="selectedCampus"
+          :campuses="campuses"
+          :generating-schedules="generatingSchedules"
+          @toggle-selection-type="onToggleSelectionType"
+          @remove-item="onRemoveItem"
+          @bulk-change-type="onBulkChangeType"
+          @clear-all="onClearAll"
+          @generate-schedules="onGenerateSchedules"
+          @update:onlyOpenSections="onlyOpenSections = $event"
+          @update:selectedCampus="selectedCampus = $event"
+        />
       </div>
     </div>
   `
