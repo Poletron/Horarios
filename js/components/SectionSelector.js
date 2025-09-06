@@ -423,7 +423,8 @@ export default {
             courseNumber: item.subjectInfo.courseNumber,
             courseTitle: item.subjectInfo.courseTitle,
             creditHourLow: item.subjectInfo.creditHourLow,
-            sections: []
+            sections: [],
+            isSpecificSections: true // Marcar que estas son secciones específicas seleccionadas
           };
         }
         grouped[subjectKey].sections.push(item.item);
@@ -440,8 +441,10 @@ export default {
         if (existingSubject) {
           // Si ya existe la materia, reemplazar sus secciones con las específicas seleccionadas
           existingSubject.sections = sectionSubject.sections;
+          existingSubject.isSpecificSections = true; // Marcar que son secciones específicas
         } else {
           // Si no existe, agregar la materia con sus secciones específicas
+          sectionSubject.isSpecificSections = true; // Marcar que son secciones específicas
           result.push(sectionSubject);
         }
       });
