@@ -174,7 +174,7 @@ export default {
       scheduleType: modalityMap[htmlSchedule.mod] || htmlSchedule.mod,
       campusDescription: 'UCAB Montalbán', // Valor por defecto
       creditHourLow: credits,
-      openSection: htmlSchedule.profesor !== 'Por Asignar', // Asumimos que si tiene profesor asignado está abierta
+      openSection: true, // Las secciones en el HTML se asumen abiertas (están disponibles para selección)
       meetingsFaculty: meetingsFaculty,
       meetingDays: this.extractMeetingDays(meetingsFaculty),
       dataSource: 'html', // Marcar fuente de datos
